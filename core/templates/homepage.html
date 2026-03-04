@@ -1431,53 +1431,75 @@
     </aside>
   </div>
 
-  <!-- ══════════════════ CREATE POST MODAL ══════════════════ -->
+  <!-- ════════════════════ CREATE POST MODAL ════════════════════ -->
   <div class="cp-overlay" id="cpOverlay" onclick="if(event.target===this)closeCreatePost()">
     <div class="cp-modal">
+
+      <!-- Header -->
       <div class="cp-header">
-        <div style="width:28px"></div>
-        <span class="cp-title">Create new post</span>
-        <button class="cp-close" onclick="closeCreatePost()">✕</button>
+        <button id="cpBackBtn"
+          style="display:none;background:none;border:none;cursor:pointer;font-size:20px;color:var(--dark)"
+          onclick="cpGoBack()">&#8592;</button>
+        <div style="width:28px" id="cpHeaderSpacer"></div>
+        <span class="cp-title" id="cpTitle">Create new post</span>
+        <button class="cp-close" onclick="closeCreatePost()">&#x2715;</button>
       </div>
 
-      <form method="POST" action="{% url 'create_post' %}" enctype="multipart/form-data" class="cp-form">
-        {% csrf_token %}
-
+      <!-- STEP 1: Pick image -->
+      <div id="cpStep1" style="flex:1;display:flex;flex-direction:column">
         <div class="upload-zone" id="uploadZone" onclick="document.getElementById('imageInput').click()">
           <div class="upload-icon">
-            <svg viewBox="0 0 24 24" stroke-width="1.5" width="40" height="40">
+            <svg viewBox="0 0 24 24" stroke-width="1.5" width="40" height="40" fill="none" stroke="#8e8e8e">
               <rect x="3" y="3" width="18" height="18" rx="2" />
               <circle cx="8.5" cy="8.5" r="1.5" />
               <polyline points="21 15 16 10 5 21" />
             </svg>
           </div>
-          <div class="upload-title">Drag photos and videos here</div>
-          <div class="upload-sub">Share up to 10 photos and videos</div>
+          <div class="upload-title">Drag photo here</div>
+          <div class="upload-sub">PNG, JPG, WEBP supported</div>
           <div
             style="background:var(--blue);color:#fff;font-size:14px;font-weight:700;padding:8px 20px;border-radius:8px;margin-top:4px;pointer-events:none">
             Select from computer
           </div>
         </div>
-        <input type="file" id="imageInput" name="image" accept="image/*,video/*" style="display:none"
+        <!-- hidden file input stays OUTSIDE upload-zone so onclick survives previewImage -->
+        <input type="file" id="imageInput" name="image" accept="image/*" style="display:none"
           onchange="previewImage(this)">
+      </div>
 
-        <div class="cp-caption-wrap">
-          <div class="cp-caption-user">
-            <div class="cap-av">
-              {% if request.user.profile and request.user.profile.profile_image %}
-              <img src="{{ request.user.profile.profile_image.url }}" alt="{{ request.user.username }}">
-              {% else %}
-              <div class="cap-av-placeholder"></div>
-              {% endif %}
-            </div>
-            <span class="cap-un">{{ request.user.username }}</span>
+      <!-- STEP 2: Preview + Caption (hidden until image picked) -->
+      <form id="cpStep2" style="display:none;flex:1;flex-direction:column;overflow:hidden"
+        enctype="multipart/form-data">
+        {% csrf_token %}
+        <div style="display:flex;flex:1;overflow:hidden">
+          <!-- Image preview -->
+          <div id="cpPreviewWrap"
+            style="flex:1;background:#000;display:flex;align-items:center;justify-content:center;min-height:200px;overflow:hidden">
+            <img id="cpPreviewImg" src="" alt="Preview" style="max-width:100%;max-height:100%;object-fit:contain">
           </div>
-          <textarea class="cap-textarea" name="caption" placeholder="Write a caption…" maxlength="2200"></textarea>
-          <input type="text" name="location" placeholder="Add location…"
-            style="border:1px solid var(--border);border-radius:8px;padding:8px 12px;font-size:14px;outline:none;background:#fafafa">
-          <button type="submit" class="cp-share-btn">Share</button>
+          <!-- Caption panel -->
+          <div
+            style="width:280px;flex-shrink:0;display:flex;flex-direction:column;border-left:1px solid var(--border);padding:14px;gap:10px;overflow-y:auto">
+            <div style="display:flex;align-items:center;gap:10px">
+              <div class="cap-av">
+                {% if request.user.profile and request.user.profile.profile_image %}
+                <img src="{{ request.user.profile.profile_image.url }}" alt="{{ request.user.username }}">
+                {% else %}
+                <div class="cap-av-placeholder"></div>
+                {% endif %}
+              </div>
+              <span class="cap-un">{{ request.user.username }}</span>
+            </div>
+            <textarea id="cpCaption" class="cap-textarea" name="caption" placeholder="Write a caption&#8230;"
+              maxlength="2200"></textarea>
+            <input id="cpLocation" type="text" name="location" placeholder="Add location&#8230;"
+              style="border:1px solid var(--border);border-radius:8px;padding:8px 12px;font-size:14px;outline:none;background:#fafafa">
+            <button type="button" id="cpShareBtn" class="cp-share-btn" onclick="submitPost()">Share</button>
+            <div id="cpError" style="color:#ed4956;font-size:13px;display:none"></div>
+          </div>
         </div>
       </form>
+
     </div>
   </div>
 
@@ -1507,16 +1529,120 @@
       document.body.style.overflow = '';
     }
 
-    /* image preview in modal */
+    /* image preview → go to Step 2 */
     function previewImage(input) {
       if (!input.files || !input.files[0]) return;
+      var file = input.files[0];
       var reader = new FileReader();
       reader.onload = function (e) {
-        var zone = document.getElementById('uploadZone');
-        zone.innerHTML = '<img src="' + e.target.result + '" style="max-width:100%;max-height:340px;object-fit:contain;border-radius:4px">';
+        // Show step 2
+        document.getElementById('cpStep1').style.display = 'none';
+        var step2 = document.getElementById('cpStep2');
+        step2.style.display = 'flex';
+        document.getElementById('cpPreviewImg').src = e.target.result;
+        // Show back button
+        document.getElementById('cpBackBtn').style.display = 'inline-flex';
+        document.getElementById('cpHeaderSpacer').style.display = 'none';
+        document.getElementById('cpTitle').textContent = 'New post';
       };
-      reader.readAsDataURL(input.files[0]);
+      reader.readAsDataURL(file);
     }
+
+    function cpGoBack() {
+      document.getElementById('cpStep2').style.display = 'none';
+      document.getElementById('cpStep1').style.display = 'flex';
+      document.getElementById('cpBackBtn').style.display = 'none';
+      document.getElementById('cpHeaderSpacer').style.display = 'block';
+      document.getElementById('cpTitle').textContent = 'Create new post';
+      document.getElementById('imageInput').value = '';
+      document.getElementById('cpPreviewImg').src = '';
+      document.getElementById('cpCaption').value = '';
+      document.getElementById('cpLocation').value = '';
+      document.getElementById('cpError').style.display = 'none';
+    }
+
+    function submitPost() {
+      var fileInput = document.getElementById('imageInput');
+      if (!fileInput.files || !fileInput.files[0]) {
+        showCpError('Please select an image.');
+        return;
+      }
+      var btn = document.getElementById('cpShareBtn');
+      btn.disabled = true;
+      btn.textContent = 'Sharing…';
+
+      var fd = new FormData();
+      fd.append('image', fileInput.files[0]);
+      fd.append('caption', document.getElementById('cpCaption').value);
+      fd.append('location', document.getElementById('cpLocation').value);
+      fd.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+
+      fetch('{% url "create_post" %}', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'X-Requested-With': 'XMLHttpRequest' },
+        body: fd
+      })
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+          btn.disabled = false;
+          btn.textContent = 'Share';
+          if (data.success) {
+            closeCreatePost();
+            showToast(data.message || 'Post shared! 🎉');
+            // Prepend new post card to feed immediately without reload
+            injectNewPost(data.post);
+          } else {
+            showCpError(data.error || 'Upload failed. Try again.');
+          }
+        })
+        .catch(function () {
+          btn.disabled = false;
+          btn.textContent = 'Share';
+          showCpError('Network error. Please try again.');
+        });
+    }
+
+    function showCpError(msg) {
+      var el = document.getElementById('cpError');
+      el.textContent = msg;
+      el.style.display = 'block';
+    }
+
+    function showToast(msg) {
+      var t = document.getElementById('toast');
+      if (!t) return;
+      t.textContent = msg;
+      t.classList.add('show');
+      setTimeout(function () { t.classList.remove('show'); }, 3500);
+    }
+
+    function injectNewPost(post) {
+      var feed = document.querySelector('.feed');
+      if (!feed) return;
+      var first = feed.querySelector('.post');
+      var html = `<div class="post" style="animation:up .4s ease both">
+        <div class="ph">
+          <div class="par"><div class="pari">&#x1F9D1;</div></div>
+          <div class="pm"><div class="pun">${escHtml(post.username)}</div></div>
+        </div>
+        <div class="pimg"><img src="${post.image_url}" alt="${escHtml(post.caption)}"></div>
+        <div class="pac">
+          <button class="abtn lbtn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" /></svg>
+          </button>
+        </div>
+        <div class="pinfo">
+          <div class="plikes">0 likes</div>
+          ${post.caption ? `<div class="pcap"><span class="un">${escHtml(post.username)}</span>${escHtml(post.caption)}</div>` : ''}
+        </div>
+        <div class="ptime">just now</div>
+      </div>`;
+      if (first) { first.insertAdjacentHTML('beforebegin', html); }
+      else { feed.insertAdjacentHTML('afterbegin', html); }
+    }
+
+    function escHtml(t) { if (!t) return ''; return String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
 
     /* notification dropdown */
     var notifOpen = false;

@@ -251,22 +251,40 @@ def create_post(request):
 
     if request.method == "POST":
 
-        image = request.FILES.get("image")
-        caption = request.POST.get("caption")
-        location = request.POST.get("location")
+        image    = request.FILES.get("image")
+        caption  = request.POST.get("caption", "").strip()
+        location = request.POST.get("location", "").strip()
+        is_ajax  = request.headers.get("X-Requested-With") == "XMLHttpRequest"
 
-        if image:
+        if not image:
+            if is_ajax:
+                return JsonResponse({"success": False, "error": "Please select an image."})
+            messages.error(request, "Please select an image.")
+            return redirect("home")
 
-            Post.objects.create(
-                user=request.user,
-                image=image,
-                caption=caption,
-                location=location
-            )
+        post = Post.objects.create(
+            user=request.user,
+            image=image,
+            caption=caption,
+            location=location
+        )
 
-            messages.success(request, "Post shared successfully")
+        if is_ajax:
+            return JsonResponse({
+                "success": True,
+                "message": "Post shared successfully! 🎉",
+                "post": {
+                    "id":        post.id,
+                    "image_url": post.image.url,
+                    "caption":   post.caption,
+                    "username":  request.user.username,
+                }
+            })
+
+        messages.success(request, "Post shared successfully! 🎉")
 
     return redirect("home")
+
 
 
 # =========================
