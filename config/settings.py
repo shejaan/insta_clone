@@ -139,24 +139,25 @@ MEDIA_ROOT = BASE_DIR / 'media'
 CLOUDINARY_URL = os.environ.get('CLOUDINARY_URL')
 
 if CLOUDINARY_URL:
-    import cloudinary
-    import cloudinary.uploader
-    import cloudinary.api
-
-    # Parse cloudinary://key:secret@name
+    # Parse cloudinary://key:secret@cloud_name
     _url = CLOUDINARY_URL.replace('cloudinary://', '')
     _key_secret, _cloud = _url.rsplit('@', 1)
     _key, _secret = _key_secret.split(':', 1)
 
-    cloudinary.config(
-        cloud_name=_cloud,
-        api_key=_key,
-        api_secret=_secret,
-        secure=True,
-    )
+    # django-cloudinary-storage reads this dict
+    CLOUDINARY_STORAGE = {
+        'CLOUD_NAME': _cloud,
+        'API_KEY':    _key,
+        'API_SECRET': _secret,
+    }
 
+    # Use Cloudinary for all uploaded media files
     DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
-    MEDIA_URL = f'https://res.cloudinary.com/{_cloud}/'
+
+    # DO NOT override MEDIA_URL here —
+    # django-cloudinary-storage generates correct URLs automatically
+    # e.g.:  https://res.cloudinary.com/<cloud>/image/upload/posts/file.jpg
+
 
 LOGIN_URL = '/login/'
 LOGIN_REDIRECT_URL = '/'
