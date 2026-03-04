@@ -1620,13 +1620,17 @@
     function injectNewPost(post) {
       var feed = document.querySelector('.feed');
       if (!feed) return;
-      var first = feed.querySelector('.post');
+
+      // Remove "No posts yet" empty state if present
+      var emptyCard = feed.querySelector('[style*="No posts"]');
+      if (emptyCard) emptyCard.remove();
+
       var html = `<div class="post" style="animation:up .4s ease both">
         <div class="ph">
           <div class="par"><div class="pari">&#x1F9D1;</div></div>
           <div class="pm"><div class="pun">${escHtml(post.username)}</div></div>
         </div>
-        <div class="pimg"><img src="${post.image_url}" alt="${escHtml(post.caption)}"></div>
+        <div class="pimg"><img src="${post.image_url}" alt="${escHtml(post.caption)}" style="width:100%"></div>
         <div class="pac">
           <button class="abtn lbtn">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" /></svg>
@@ -1634,12 +1638,21 @@
         </div>
         <div class="pinfo">
           <div class="plikes">0 likes</div>
-          ${post.caption ? `<div class="pcap"><span class="un">${escHtml(post.username)}</span>${escHtml(post.caption)}</div>` : ''}
+          ${post.caption ? `<div class="pcap"><span class="un">${escHtml(post.username)}</span> ${escHtml(post.caption)}</div>` : ''}
         </div>
         <div class="ptime">just now</div>
       </div>`;
-      if (first) { first.insertAdjacentHTML('beforebegin', html); }
-      else { feed.insertAdjacentHTML('afterbegin', html); }
+
+      // Always insert AFTER .sbar so stories stay on top
+      var sbar = feed.querySelector('.sbar');
+      if (sbar) {
+        sbar.insertAdjacentHTML('afterend', html);
+      } else {
+        // No stories bar — insert before first post or at top of feed
+        var firstPost = feed.querySelector('.post');
+        if (firstPost) { firstPost.insertAdjacentHTML('beforebegin', html); }
+        else { feed.insertAdjacentHTML('afterbegin', html); }
+      }
     }
 
     function escHtml(t) { if (!t) return ''; return String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
