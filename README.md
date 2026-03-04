@@ -29,7 +29,7 @@ Database:
 
 Clone repository
 
-git clone https://github.com/YOUR_USERNAME/insta_clone.git
+git clone https://github.com/shejaan/insta_clone.git
 
 Go to project folder
 
