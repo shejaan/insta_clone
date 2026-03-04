@@ -39,7 +39,7 @@ urlpatterns = [
     path('search/', views.search_view, name='search'),
     path('suggested-users/', views.suggested_users_view, name='suggested_users'),
     path('switch-account/', views.switch_account_view, name='switch_account'),
-
+    path('debug-storage/', views.debug_storage, name='debug_storage'),
 
 ]
 

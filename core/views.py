@@ -587,3 +587,23 @@ def suggested_users_view(request):
 
 def switch_account_view(request):
     return redirect('login')
+
+
+# Temporary debug endpoint — remove after confirming Cloudinary works
+def debug_storage(request):
+    import os
+    from django.core.files.storage import default_storage
+    from django.conf import settings
+    data = {
+        'storage_class':      type(default_storage).__name__,
+        'CLOUDINARY_URL_set': bool(os.environ.get('CLOUDINARY_URL')),
+        'DEFAULT_FILE_STORAGE': getattr(settings, 'DEFAULT_FILE_STORAGE', 'not set'),
+        'CLOUDINARY_STORAGE':   getattr(settings, 'CLOUDINARY_STORAGE', 'not set'),
+        'MEDIA_URL':            settings.MEDIA_URL,
+    }
+    return JsonResponse(data)
+
+
+
+def switch_account_view(request):
+    return redirect('login')
