@@ -11,6 +11,15 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
 from pathlib import Path
+import os
+import dj_database_url
+from dotenv import load_dotenv
+
+# Load .env file for local development
+load_dotenv()
+
+# Build paths inside the project like this: BASE_DIR / 'subdir'.
+BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -20,7 +29,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 import os
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.environ.get('SECRET_KEY')
+SECRET_KEY = os.environ.get('SECRET_KEY', 'dev-secret-key-unsafe')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get("DEBUG") == "True"
@@ -37,6 +46,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'cloudinary',
+    'cloudinary_storage',
     'core',
 ]
 
@@ -122,8 +133,39 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
+# ── Cloudinary (production media storage) ──
+# Set CLOUDINARY_URL env var on Render to enable cloud storage.
+# Format: cloudinary://<api_key>:<api_secret>@<cloud_name>
+CLOUDINARY_URL = os.environ.get('CLOUDINARY_URL')
+
+if CLOUDINARY_URL:
+    import cloudinary
+    import cloudinary.uploader
+    import cloudinary.api
+
+    # Parse cloudinary://key:secret@name
+    _url = CLOUDINARY_URL.replace('cloudinary://', '')
+    _key_secret, _cloud = _url.rsplit('@', 1)
+    _key, _secret = _key_secret.split(':', 1)
+
+    cloudinary.config(
+        cloud_name=_cloud,
+        api_key=_key,
+        api_secret=_secret,
+        secure=True,
+    )
+
+    DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+    MEDIA_URL = f'https://res.cloudinary.com/{_cloud}/'
+
 LOGIN_URL = '/login/'
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/login/'
 
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
+# ── Database ──
+# Use DATABASE_URL env var on Render (PostgreSQL), fall back to SQLite locally.
+_db_url = os.environ.get('DATABASE_URL')
+if _db_url:
+    DATABASES = {'default': dj_database_url.config(default=_db_url, conn_max_age=600)}
