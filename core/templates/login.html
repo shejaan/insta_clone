@@ -1,0 +1,863 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Instagram</title>
+    <link href="https://fonts.googleapis.com/css2?family=Grand+Hotel&family=Nunito:wght@300;400;600;700&display=swap"
+        rel="stylesheet">
+    <style>
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        :root {
+            --ig-gradient: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
+            --ig-blue: #0095f6;
+            --ig-blue-hover: #1877f2;
+            --ig-border: #dbdbdb;
+            --ig-text-gray: #8e8e8e;
+            --ig-text-dark: #262626;
+            --ig-bg: #fafafa;
+            --panel-bg: #ffffff;
+            --input-bg: #fafafa;
+        }
+
+        body {
+            font-family: 'Nunito', sans-serif;
+            background-color: var(--ig-bg);
+            color: var(--ig-text-dark);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* ── MAIN ── */
+        main {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 32px 16px;
+            gap: 32px;
+        }
+
+        /* ── PHONE MOCKUP ── */
+        #mobile {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 380px;
+            height: 580px;
+            flex-shrink: 0;
+        }
+
+        .phone-frame {
+            width: 250px;
+            height: 500px;
+            border-radius: 36px;
+            border: 2px solid #c7c7c7;
+            background: #fff;
+            box-shadow:
+                0 0 0 8px #e5e5e5,
+                0 20px 60px rgba(0, 0, 0, 0.18),
+                0 4px 16px rgba(0, 0, 0, 0.10);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .phone-notch {
+            width: 80px;
+            height: 18px;
+            background: #e5e5e5;
+            border-radius: 0 0 14px 14px;
+            margin: 0 auto 0;
+            flex-shrink: 0;
+        }
+
+        .phone-screen {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .phone-stories {
+            display: flex;
+            gap: 8px;
+            padding: 12px 10px 8px;
+            overflow: hidden;
+        }
+
+        .story-bubble {
+            flex-shrink: 0;
+            width: 46px;
+            height: 46px;
+            border-radius: 50%;
+            background: var(--ig-gradient);
+            padding: 2px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .story-bubble-inner {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            border: 2px solid #fff;
+            background: #e0e0e0;
+            overflow: hidden;
+        }
+
+        .story-bubble-inner img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .phone-post {
+            background: #fff;
+            border-top: 1px solid #efefef;
+            flex: 1;
+        }
+
+        .phone-post-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 10px;
+        }
+
+        .post-avatar {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: var(--ig-gradient);
+            padding: 1.5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .post-avatar-inner {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            border: 1.5px solid #fff;
+            background: #c7c7c7;
+        }
+
+        .post-username {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--ig-text-dark);
+        }
+
+        .post-image {
+            width: 100%;
+            aspect-ratio: 1;
+            background: linear-gradient(135deg, #ffd6e7 0%, #c3d5ff 50%, #d6ffd8 100%);
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .post-image-placeholder {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .post-image-placeholder svg {
+            width: 32px;
+            height: 32px;
+            fill: rgba(255, 255, 255, 0.9);
+        }
+
+        .post-actions {
+            display: flex;
+            gap: 12px;
+            padding: 8px 10px 4px;
+        }
+
+        .post-action-icon {
+            width: 20px;
+            height: 20px;
+        }
+
+        .post-action-icon svg {
+            width: 100%;
+            height: 100%;
+            fill: none;
+            stroke: var(--ig-text-dark);
+            stroke-width: 1.5;
+        }
+
+        .phone-home-bar {
+            height: 4px;
+            width: 60px;
+            background: #333;
+            border-radius: 2px;
+            margin: 8px auto;
+        }
+
+        /* ── AUTH SECTION ── */
+        #auth {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            width: 350px;
+            max-width: 100%;
+        }
+
+        /* ── PANELS ── */
+        .panel {
+            background: var(--panel-bg);
+            border: 1px solid var(--ig-border);
+            border-radius: 1px;
+            padding: 40px 40px 24px;
+        }
+
+        /* ── LOGO ── */
+        .logo-text {
+            font-family: 'Grand Hotel', cursive;
+            font-size: 40px;
+            font-weight: 400;
+            color: var(--ig-text-dark);
+            text-align: center;
+            margin-bottom: 24px;
+            letter-spacing: -0.5px;
+            display: block;
+        }
+
+        /* ── FORM ── */
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+        }
+
+        input {
+            width: 100%;
+            padding: 9px 8px 7px;
+            background: var(--input-bg);
+            border: 1px solid var(--ig-border);
+            border-radius: 3px;
+            font-size: 12px;
+            font-family: 'Nunito', sans-serif;
+            color: var(--ig-text-dark);
+            transition: border-color 0.2s;
+            outline: none;
+        }
+
+        input::placeholder {
+            color: #aaa;
+            font-size: 12px;
+        }
+
+        input:focus {
+            border-color: #a8a8a8;
+            background: #fff;
+        }
+
+        /* Login Button */
+        button[type="button"],
+        button[type="submit"] {
+            width: 100%;
+            padding: 7px 16px;
+            background: var(--ig-blue);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 700;
+            font-family: 'Nunito', sans-serif;
+            cursor: pointer;
+            margin-top: 6px;
+            transition: background 0.15s, opacity 0.15s;
+            letter-spacing: 0.2px;
+        }
+
+        button[type="button"]:hover,
+        button[type="submit"]:hover {
+            background: var(--ig-blue-hover);
+        }
+
+        button[type="button"]:active,
+        button[type="submit"]:active {
+            opacity: 0.85;
+        }
+
+        /* ── SEPARATOR ── */
+        .separator {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin: 16px 0 12px;
+        }
+
+        .separator span {
+            flex: 1;
+            height: 1px;
+            background: var(--ig-border);
+        }
+
+        .or {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--ig-text-gray);
+            letter-spacing: 1px;
+            flex-shrink: 0;
+        }
+
+        /* ── LOGIN WITH FB ── */
+        .login-with-fb {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .fb-login-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0;
+            font-family: 'Nunito', sans-serif;
+        }
+
+        .fb-icon {
+            width: 20px;
+            height: 20px;
+            flex-shrink: 0;
+        }
+
+        .fb-login-link {
+            color: #385185;
+            font-size: 14px;
+            font-weight: 700;
+            text-decoration: none;
+            transition: color 0.15s;
+        }
+
+        .fb-login-link:hover {
+            color: var(--ig-text-dark);
+        }
+
+        .forgot-link {
+            color: var(--ig-text-gray);
+            font-size: 12px;
+            text-decoration: none;
+            transition: color 0.15s;
+        }
+
+        .forgot-link:hover {
+            color: var(--ig-text-dark);
+        }
+
+        /* ── REGISTER PANEL ── */
+        .panel.register {
+            padding: 20px 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+        }
+
+        .panel.register p {
+            font-size: 14px;
+            color: var(--ig-text-dark);
+        }
+
+        .panel.register a {
+            color: var(--ig-blue);
+            font-weight: 700;
+            font-size: 14px;
+            text-decoration: none;
+            transition: opacity 0.15s;
+        }
+
+        .panel.register a:hover {
+            opacity: 0.7;
+        }
+
+        /* ── APP DOWNLOAD ── */
+        .app-download {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 16px;
+            margin-top: 10px;
+        }
+
+        .app-download p {
+            font-size: 14px;
+            color: var(--ig-text-dark);
+        }
+
+        .app-badges {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+        }
+
+        .app-badge {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            border: 1px solid #c7c7c7;
+            border-radius: 6px;
+            padding: 5px 10px;
+            background: #fff;
+            text-decoration: none;
+            color: var(--ig-text-dark);
+            transition: border-color 0.15s, box-shadow 0.15s;
+        }
+
+        .app-badge:hover {
+            border-color: #888;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+        }
+
+        .app-badge svg {
+            width: 20px;
+            height: 20px;
+            flex-shrink: 0;
+        }
+
+        .badge-text {
+            display: flex;
+            flex-direction: column;
+            line-height: 1.2;
+        }
+
+        .badge-text .small {
+            font-size: 9px;
+            font-weight: 400;
+        }
+
+        .badge-text .big {
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        /* ── FOOTER ── */
+        footer {
+            padding: 24px 16px 16px;
+            text-align: center;
+        }
+
+        footer ul {
+            list-style: none;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 4px 16px;
+            margin-bottom: 14px;
+        }
+
+        footer ul li a {
+            font-size: 11px;
+            color: var(--ig-text-gray);
+            text-decoration: none;
+            font-weight: 400;
+            letter-spacing: 0.2px;
+            transition: color 0.15s;
+        }
+
+        footer ul li a:hover {
+            color: var(--ig-text-dark);
+        }
+
+        .copyright {
+            font-size: 11px;
+            color: var(--ig-text-gray);
+        }
+
+        /* ── ERROR ALERT ── */
+        .alert-error {
+            background: #ffeaea;
+            color: #c0392b;
+            border: 1px solid #f5c6cb;
+            border-radius: 6px;
+            padding: 10px 12px;
+            font-size: 13px;
+            font-weight: 600;
+            text-align: center;
+            line-height: 1.4;
+            margin-bottom: 4px;
+        }
+
+        input.input-error {
+            border-color: #ed4956;
+        }
+
+        .input-wrap {
+            position: relative;
+        }
+
+        .pw-toggle {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--ig-text-dark);
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .pw-toggle:hover {
+            color: var(--ig-text-gray);
+        }
+
+        @keyframes shake {
+
+            0%,
+            100% {
+                transform: translateX(0);
+            }
+
+            20% {
+                transform: translateX(-8px);
+            }
+
+            40% {
+                transform: translateX(8px);
+            }
+
+            60% {
+                transform: translateX(-5px);
+            }
+
+            80% {
+                transform: translateX(5px);
+            }
+        }
+
+        /* ── ANIMATIONS ── */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(16px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        #auth {
+            animation: fadeInUp 0.45s ease both;
+        }
+
+        #mobile {
+            animation: fadeInUp 0.45s 0.1s ease both;
+        }
+
+        /* ── RESPONSIVE ── */
+        @media (max-width: 768px) {
+            #mobile {
+                display: none;
+            }
+
+            main {
+                padding: 20px 16px;
+            }
+
+            .panel {
+                padding: 30px 24px 20px;
+            }
+
+            .panel.register {
+                padding: 16px 24px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <main>
+        <!-- Phone Mockup -->
+        <section id="mobile">
+            <div class="phone-frame">
+                <div class="phone-notch"></div>
+                <div class="phone-screen">
+                    <div class="phone-stories">
+                        <div class="story-bubble">
+                            <div class="story-bubble-inner" style="background:#ffd6e7;"></div>
+                        </div>
+                        <div class="story-bubble">
+                            <div class="story-bubble-inner" style="background:#c3d5ff;"></div>
+                        </div>
+                        <div class="story-bubble">
+                            <div class="story-bubble-inner" style="background:#d6ffd8;"></div>
+                        </div>
+                        <div class="story-bubble">
+                            <div class="story-bubble-inner" style="background:#ffe0c3;"></div>
+                        </div>
+                    </div>
+                    <div class="phone-post">
+                        <div class="phone-post-header">
+                            <div class="post-avatar">
+                                <div class="post-avatar-inner"></div>
+                            </div>
+                            <span class="post-username">username</span>
+                        </div>
+                        <div class="post-image">
+                            <div class="post-image-placeholder">
+                                <svg viewBox="0 0 24 24">
+                                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                                </svg>
+                            </div>
+                        </div>
+                        <div class="post-actions">
+                            <div class="post-action-icon">
+                                <svg viewBox="0 0 24 24">
+                                    <path
+                                        d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+                                </svg>
+                            </div>
+                            <div class="post-action-icon">
+                                <svg viewBox="0 0 24 24">
+                                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                                </svg>
+                            </div>
+                            <div class="post-action-icon">
+                                <svg viewBox="0 0 24 24">
+                                    <line x1="22" y1="2" x2="11" y2="13" />
+                                    <polygon points="22 2 15 22 11 13 2 9 22 2" />
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="phone-home-bar"></div>
+            </div>
+        </section>
+
+        <!-- Auth Section -->
+        <section id="auth">
+            <!-- Login Panel -->
+            <div class="panel login">
+                <span class="logo-text">Instagram</span>
+
+                <form method="POST" action="{% url 'login' %}" id="loginForm" onsubmit="return handleLogin(event)">
+                    {% csrf_token %}
+
+                    {# ── Backend error messages (wrong password, etc.) ── #}
+                    {% if messages %}
+                    {% for message in messages %}
+                    <div class="alert-error">{{ message }}</div>
+                    {% endfor %}
+                    {% endif %}
+
+                    <label for="username" class="sr-only">Phone number, username or email</label>
+                    <input id="username" name="username" type="text" placeholder="Phone number, username or email"
+                        autocomplete="username" value="{{ request.POST.username }}" />
+
+                    <label for="password" class="sr-only">Password</label>
+                    <div class="input-wrap">
+                        <input id="password" name="password" type="password" placeholder="Password"
+                            autocomplete="current-password" style="padding-right:48px" />
+                        <span class="pw-toggle" id="pwToggle" onclick="togglePassword()">Show</span>
+                    </div>
+
+                    <button type="submit" id="loginBtn">Log in</button>
+                </form>
+
+                <div class="separator">
+                    <span></span>
+                    <div class="or">OR</div>
+                    <span></span>
+                </div>
+
+                <div class="login-with-fb">
+                    <a href="#" class="fb-login-btn"
+                        style="display:flex;align-items:center;gap:8px;text-decoration:none;">
+                        <!-- Facebook icon -->
+                        <svg class="fb-icon" viewBox="0 0 24 24" fill="#385185">
+                            <path
+                                d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
+                        </svg>
+                        <span class="fb-login-link">Log in with Facebook</span>
+                    </a>
+                    <a href="#" class="forgot-link">Forgot password?</a>
+                </div>
+            </div>
+
+            <!-- Register Panel -->
+            <div class="panel register">
+                <p>Don't have an account?</p>
+                <a href="{% url 'register' %}">&nbsp;Sign up</a>
+            </div>
+
+            <!-- App Download -->
+            <div class="app-download">
+                <p>Download application.</p>
+                <div class="app-badges">
+                    <a href="#" class="app-badge">
+                        <!-- Apple icon -->
+                        <svg viewBox="0 0 24 24" fill="currentColor">
+                            <path
+                                d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z" />
+                        </svg>
+                        <div class="badge-text">
+                            <span class="small">Download from</span>
+                            <span class="big">App Store</span>
+                        </div>
+                    </a>
+                    <a href="#" class="app-badge">
+                        <!-- Google Play icon -->
+                        <svg viewBox="0 0 24 24" fill="currentColor">
+                            <path
+                                d="M3.18 23.76c.33.19.71.24 1.07.14l12.1-12.1L13.06 8.5 3.18 23.76zm16.7-10.04l-3.38-1.95-3.11 3.11 3.11 3.11 3.4-1.96c.97-.56.97-1.75-.02-2.31zM3.02.62C2.68.83 2.5 1.2 2.5 1.65v20.68c0 .45.18.82.52 1.03l.11.06L14.27 12 3.13.56l-.11.06z" />
+                        </svg>
+                        <div class="badge-text">
+                            <span class="small">Download from</span>
+                            <span class="big">Google Play</span>
+                        </div>
+                    </a>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <ul>
+            <li><a href="#">SOBRE</a></li>
+            <li><a href="#">AJUDA</a></li>
+            <li><a href="#">IMPRENSA</a></li>
+            <li><a href="#">API</a></li>
+            <li><a href="#">CARREIRAS</a></li>
+            <li><a href="#">PRIVACIDADE</a></li>
+            <li><a href="#">TERMOS</a></li>
+            <li><a href="#">LOCALIZAÇÃO</a></li>
+            <li><a href="#">CONTAS MAIS RELEVANTES</a></li>
+            <li><a href="#">HASHTAGS</a></li>
+            <li><a href="#">IDIOMA</a></li>
+        </ul>
+        <p class="copyright">© 2020 Instagram do Facebook</p>
+    </footer>
+
+</body>
+
+<script>
+    // ── Password show/hide ──
+    function togglePassword() {
+        var inp = document.getElementById('password');
+        var btn = document.getElementById('pwToggle');
+        if (inp.type === 'password') { inp.type = 'text'; btn.textContent = 'Hide'; }
+        else { inp.type = 'password'; btn.textContent = 'Show'; }
+    }
+
+    // ── Show error inline (no reload) ──
+    function showError(msg) {
+        var un = document.getElementById('username');
+        var pw = document.getElementById('password');
+        var form = document.getElementById('loginForm');
+        var btn = document.getElementById('loginBtn');
+
+        var old = document.getElementById('ajax-error');
+        if (old) old.remove();
+
+        var banner = document.createElement('div');
+        banner.id = 'ajax-error';
+        banner.className = 'alert-error';
+        banner.textContent = msg;
+        form.querySelector('[name=csrfmiddlewaretoken]').insertAdjacentElement('afterend', banner);
+
+        un.classList.add('input-error');
+        pw.classList.add('input-error');
+
+        form.style.animation = 'none';
+        void form.offsetWidth;
+        form.style.animation = 'shake 0.4s ease';
+
+        btn.disabled = false;
+        btn.textContent = 'Log in';
+    }
+
+    // ── Clear errors when user starts typing ──
+    ['username', 'password'].forEach(function (id) {
+        document.getElementById(id).addEventListener('input', function () {
+            this.classList.remove('input-error');
+            var old = document.getElementById('ajax-error');
+            if (old) old.remove();
+        });
+    });
+
+    // ── AJAX submit — intercept form and use fetch() ──
+    document.getElementById('loginForm').addEventListener('submit', function (e) {
+        e.preventDefault();   // ← Stop the normal page reload
+
+        var un = document.getElementById('username');
+        var pw = document.getElementById('password');
+        var btn = document.getElementById('loginBtn');
+
+        // Reset
+        un.classList.remove('input-error');
+        pw.classList.remove('input-error');
+
+        // Client-side empty checks (instant, no network hit needed)
+        if (!un.value.trim() && !pw.value.trim()) {
+            return showError('Please enter your username and password.');
+        } else if (!un.value.trim()) {
+            return showError('Please enter your username or email.');
+        } else if (!pw.value) {
+            return showError('Please enter your password.');
+        }
+
+        // Show loading state on button
+        btn.disabled = true;
+        btn.textContent = 'Logging in…';
+
+        fetch(this.action, {
+            method: 'POST',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' },
+            body: new FormData(this)
+        })
+            .then(function (res) { return res.json(); })
+            .then(function (data) {
+                if (data.success) {
+                    window.location.href = data.redirect;   // ← smooth redirect
+                } else {
+                    showError(data.error);
+                }
+            })
+            .catch(function () {
+                showError('Something went wrong. Please try again.');
+            });
+    });
+</script>
+
+</html>

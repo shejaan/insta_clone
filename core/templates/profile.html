@@ -1,0 +1,1839 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Instagram • Profile</title>
+  <link href="https://fonts.googleapis.com/css2?family=Grand+Hotel&family=Nunito:wght@400;600;700;800&display=swap"
+    rel="stylesheet">
+  <style>
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0
+    }
+
+    :root {
+      --grad: linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888);
+      --blue: #0095f6;
+      --border: #dbdbdb;
+      --gray: #8e8e8e;
+      --dark: #262626;
+      --bg: #fafafa;
+      --wh: #fff;
+      --nav: 56px
+    }
+
+    body {
+      font-family: 'Nunito', sans-serif;
+      background: var(--bg);
+      color: var(--dark);
+      min-height: 100vh
+    }
+
+    a {
+      text-decoration: none;
+      color: inherit
+    }
+
+    button {
+      cursor: pointer;
+      border: none;
+      background: none;
+      font-family: inherit
+    }
+
+    nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: var(--nav);
+      background: var(--wh);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+      z-index: 100
+    }
+
+    .logo {
+      font-family: 'Grand Hotel', cursive;
+      font-size: 26px;
+      color: var(--dark)
+    }
+
+    .nicons {
+      display: flex;
+      align-items: center;
+      gap: 16px
+    }
+
+    .nibtn {
+      width: 24px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--dark);
+      transition: opacity .15s;
+      position: relative
+    }
+
+    .nibtn:hover {
+      opacity: .6
+    }
+
+    .nibtn svg {
+      width: 24px;
+      height: 24px
+    }
+
+    .ndot {
+      position: absolute;
+      top: -2px;
+      right: -2px;
+      width: 8px;
+      height: 8px;
+      background: #ff3040;
+      border-radius: 50%;
+      border: 1.5px solid #fff
+    }
+
+    .navat {
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      overflow: hidden;
+      cursor: pointer;
+      border: 2px solid var(--dark);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      background: linear-gradient(135deg, #a8edea, #fed6e3)
+    }
+
+    .page {
+      max-width: 935px;
+      margin: 0 auto;
+      margin-top: var(--nav);
+      padding: 24px 16px 60px
+    }
+
+    .ph {
+      display: flex;
+      align-items: flex-start;
+      gap: 60px;
+      padding-bottom: 36px;
+      border-bottom: 1px solid var(--border);
+      animation: up .4s ease both
+    }
+
+    @keyframes up {
+      from {
+        opacity: 0;
+        transform: translateY(12px)
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0)
+      }
+    }
+
+    @keyframes pop {
+      from {
+        opacity: 0;
+        transform: scale(.85)
+      }
+
+      to {
+        opacity: 1;
+        transform: scale(1)
+      }
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0
+      }
+
+      to {
+        opacity: 1
+      }
+    }
+
+    .av-wrap {
+      flex-shrink: 0;
+      position: relative;
+      cursor: pointer
+    }
+
+    .av-ring {
+      width: 140px;
+      height: 140px;
+      border-radius: 50%;
+      background: var(--grad);
+      padding: 3px;
+      transition: transform .2s
+    }
+
+    .av-ring:hover {
+      transform: scale(1.04)
+    }
+
+    .av-inner {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      border: 3px solid #fff;
+      background: linear-gradient(135deg, #ffd6e7, #c3d5ff);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 60px
+    }
+
+    .av-plus {
+      position: absolute;
+      bottom: 6px;
+      right: 6px;
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      background: var(--blue);
+      border: 2px solid #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-size: 17px;
+      font-weight: 700
+    }
+
+    .pinfo {
+      flex: 1;
+      min-width: 0
+    }
+
+    .ptop {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 18px
+    }
+
+    .pun {
+      font-size: 20px;
+      font-weight: 400
+    }
+
+    .pbtns {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap
+    }
+
+    .bedit {
+      padding: 6px 14px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 700;
+      background: var(--wh);
+      transition: background .15s
+    }
+
+    .bedit:hover {
+      background: #f0f0f0
+    }
+
+    .bmore {
+      width: 32px;
+      height: 32px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      transition: background .15s
+    }
+
+    .bmore:hover {
+      background: #f0f0f0
+    }
+
+    .pstats {
+      display: flex;
+      gap: 36px;
+      margin-bottom: 16px
+    }
+
+    .stat {
+      cursor: pointer
+    }
+
+    .stat:hover .snum {
+      color: var(--blue)
+    }
+
+    .snum {
+      font-size: 16px;
+      font-weight: 800;
+      margin-right: 4px
+    }
+
+    .slbl {
+      font-size: 14px
+    }
+
+    .stat-link {
+      cursor: pointer;
+      transition: opacity .15s
+    }
+
+    .stat-link:hover {
+      opacity: .7
+    }
+
+    .bmore-wrap {
+      position: relative;
+      display: inline-flex
+    }
+
+    .bmore-menu {
+      position: absolute;
+      top: calc(100% + 6px);
+      right: 0;
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, .12);
+      min-width: 160px;
+      overflow: hidden;
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(-6px) scale(.97);
+      transform-origin: top right;
+      transition: opacity .18s ease, transform .18s ease;
+      z-index: 150
+    }
+
+    .bmore-menu.open {
+      opacity: 1;
+      pointer-events: all;
+      transform: translateY(0) scale(1)
+    }
+
+    .bmitem {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      width: 100%;
+      padding: 12px 16px;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--dark);
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-family: inherit;
+      transition: background .12s;
+      text-align: left
+    }
+
+    .bmitem:hover {
+      background: #f5f5f5
+    }
+
+    .bmitem.danger {
+      color: #e00909
+    }
+
+    .bmitem svg {
+      width: 17px;
+      height: 17px;
+      flex-shrink: 0
+    }
+
+    .pbio .bname {
+      font-size: 14px;
+      font-weight: 800;
+      display: block;
+      margin-bottom: 2px
+    }
+
+    .pbio .bcat {
+      font-size: 12px;
+      color: var(--gray);
+      display: block;
+      margin-bottom: 4px
+    }
+
+    .pbio .bdesc {
+      font-size: 14px;
+      display: block;
+      line-height: 1.55;
+      margin-bottom: 6px
+    }
+
+    .pbio .blink {
+      font-size: 14px;
+      color: var(--blue);
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      gap: 3px
+    }
+
+    .pbio .blink:hover {
+      text-decoration: underline
+    }
+
+    .hlwrap {
+      display: flex;
+      gap: 20px;
+      overflow-x: auto;
+      scrollbar-width: none;
+      padding: 16px 0 18px;
+      border-bottom: 1px solid var(--border);
+      animation: up .4s .08s ease both
+    }
+
+    .hlwrap::-webkit-scrollbar {
+      display: none
+    }
+
+    .hli {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 7px;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: transform .15s
+    }
+
+    .hli:hover {
+      transform: scale(1.05)
+    }
+
+    .hlring {
+      width: 62px;
+      height: 62px;
+      border-radius: 50%;
+      border: 1px solid var(--border);
+      padding: 2px
+    }
+
+    .hladd .hlring {
+      border: 1px dashed #c7c7c7
+    }
+
+    .hlin {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      border: 2px solid #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 26px
+    }
+
+    .hlname {
+      font-size: 11px;
+      max-width: 70px;
+      text-align: center;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap
+    }
+
+    .tabs {
+      display: flex;
+      justify-content: center;
+      border-bottom: 1px solid var(--border);
+      animation: up .4s .12s ease both
+    }
+
+    .tbtn {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding: 13px 22px;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--gray);
+      letter-spacing: 1px;
+      border-bottom: 1px solid transparent;
+      margin-bottom: -1px;
+      transition: color .15s, border-color .15s
+    }
+
+    .tbtn.active {
+      color: var(--dark);
+      border-bottom-color: var(--dark)
+    }
+
+    .tbtn:hover {
+      color: var(--dark)
+    }
+
+    .tbtn svg {
+      width: 15px;
+      height: 15px
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 3px;
+      margin-top: 3px;
+      animation: up .4s .16s ease both
+    }
+
+    .gi {
+      aspect-ratio: 1;
+      overflow: hidden;
+      position: relative;
+      cursor: pointer
+    }
+
+    .gf {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 46px;
+      transition: transform .3s
+    }
+
+    .gi:hover .gf {
+      transform: scale(1.07)
+    }
+
+    .gover {
+      position: absolute;
+      inset: 0;
+      background: rgba(0, 0, 0, .32);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 18px;
+      opacity: 0;
+      transition: opacity .2s
+    }
+
+    .gi:hover .gover {
+      opacity: 1
+    }
+
+    .ostat {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      color: #fff;
+      font-size: 14px;
+      font-weight: 700
+    }
+
+    .ostat svg {
+      width: 17px;
+      height: 17px;
+      fill: #fff
+    }
+
+    .badge {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      color: #fff;
+      filter: drop-shadow(0 1px 2px rgba(0, 0, 0, .5))
+    }
+
+    .badge svg {
+      width: 17px;
+      height: 17px
+    }
+
+    .c1 {
+      background: linear-gradient(135deg, #ffd6e7, #ffb3ba)
+    }
+
+    .c2 {
+      background: linear-gradient(135deg, #c3d5ff, #a8c8ff)
+    }
+
+    .c3 {
+      background: linear-gradient(135deg, #d6ffd8, #b3f0b5)
+    }
+
+    .c4 {
+      background: linear-gradient(135deg, #fff3b3, #ffe0a8)
+    }
+
+    .c5 {
+      background: linear-gradient(135deg, #e8d5ff, #d0b0ff)
+    }
+
+    .c6 {
+      background: linear-gradient(135deg, #ffecd2, #fcb69f)
+    }
+
+    .c7 {
+      background: linear-gradient(135deg, #a8edea, #fed6e3)
+    }
+
+    .c8 {
+      background: linear-gradient(135deg, #d4fc79, #96e6a1)
+    }
+
+    .c9 {
+      background: linear-gradient(135deg, #fbc2eb, #a6c1ee)
+    }
+
+    .mo {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, .7);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 200;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .22s;
+      padding: 16px
+    }
+
+    .mo.open {
+      opacity: 1;
+      pointer-events: all
+    }
+
+    .mclose {
+      position: fixed;
+      top: 14px;
+      right: 14px;
+      color: #fff;
+      font-size: 26px;
+      cursor: pointer;
+      z-index: 201;
+      line-height: 1;
+      width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center
+    }
+
+    .mbox {
+      background: #fff;
+      border-radius: 4px;
+      overflow: hidden;
+      display: flex;
+      max-width: 860px;
+      width: 100%;
+      max-height: 88vh;
+      animation: pop .22s ease both
+    }
+
+    .mimg {
+      width: 52%;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 86px;
+      min-height: 380px
+    }
+
+    .mside {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      border-left: 1px solid var(--border);
+      overflow: hidden
+    }
+
+    .mhead {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0
+    }
+
+    .mav {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 15px;
+      border: 1px solid #efefef;
+      flex-shrink: 0
+    }
+
+    .mun {
+      font-size: 14px;
+      font-weight: 700;
+      flex: 1
+    }
+
+    .mcmts {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px;
+      scrollbar-width: thin;
+      scrollbar-color: #ddd transparent
+    }
+
+    .mcmt {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 12px
+    }
+
+    .ccav {
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      border: 1px solid #efefef;
+      flex-shrink: 0
+    }
+
+    .cctext {
+      font-size: 13px;
+      line-height: 1.45;
+      margin-bottom: 3px
+    }
+
+    .cctext .un {
+      font-weight: 700;
+      margin-right: 4px
+    }
+
+    .ccmeta {
+      display: flex;
+      gap: 10px
+    }
+
+    .cctime {
+      font-size: 11px;
+      color: var(--gray)
+    }
+
+    .cclk {
+      font-size: 11px;
+      color: var(--gray);
+      font-weight: 700;
+      cursor: pointer
+    }
+
+    .macts {
+      padding: 10px 12px 4px;
+      border-top: 1px solid var(--border);
+      flex-shrink: 0
+    }
+
+    .mactrow {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 6px
+    }
+
+    .mab {
+      display: flex;
+      align-items: center;
+      color: var(--dark);
+      transition: transform .15s
+    }
+
+    .mab:hover {
+      transform: scale(1.15)
+    }
+
+    .mab svg {
+      width: 22px;
+      height: 22px
+    }
+
+    .mabm {
+      margin-left: auto
+    }
+
+    .mlikes {
+      font-size: 14px;
+      font-weight: 700;
+      margin-bottom: 3px
+    }
+
+    .mcap {
+      font-size: 13px;
+      margin-bottom: 3px
+    }
+
+    .mcap .un {
+      font-weight: 700;
+      margin-right: 4px
+    }
+
+    .mtime {
+      font-size: 11px;
+      color: var(--gray);
+      margin-bottom: 5px;
+      text-transform: uppercase;
+      letter-spacing: .3px
+    }
+
+    .minrow {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border-top: 1px solid var(--border);
+      padding: 9px 12px;
+      flex-shrink: 0
+    }
+
+    .minput {
+      flex: 1;
+      border: none;
+      outline: none;
+      font-family: inherit;
+      font-size: 14px;
+      color: var(--dark)
+    }
+
+    .minput::placeholder {
+      color: var(--gray)
+    }
+
+    .mpostbtn {
+      color: var(--blue);
+      font-size: 13px;
+      font-weight: 700;
+      transition: opacity .15s
+    }
+
+    .mpostbtn:hover {
+      opacity: .6
+    }
+
+    /* ── FOLLOWERS / FOLLOWING MODAL ── */
+    .fl-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, .55);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 300;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .22s;
+      padding: 16px
+    }
+
+    .fl-overlay.open {
+      opacity: 1;
+      pointer-events: all
+    }
+
+    .fl-box {
+      background: #fff;
+      border-radius: 12px;
+      width: 100%;
+      max-width: 400px;
+      max-height: 82vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      animation: pop .22s ease both
+    }
+
+    .fl-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0
+    }
+
+    .fl-title {
+      font-size: 16px;
+      font-weight: 800;
+      flex: 1;
+      text-align: center
+    }
+
+    .fl-close {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      color: var(--dark);
+      transition: background .15s
+    }
+
+    .fl-close:hover {
+      background: #f0f0f0
+    }
+
+    .fl-tabs {
+      display: flex;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0
+    }
+
+    .fl-tab {
+      flex: 1;
+      padding: 11px 0;
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--gray);
+      border-bottom: 2px solid transparent;
+      margin-bottom: -1px;
+      transition: color .15s, border-color .15s
+    }
+
+    .fl-tab.active {
+      color: var(--dark);
+      border-bottom-color: var(--dark)
+    }
+
+    .fl-tab:hover {
+      color: var(--dark)
+    }
+
+    .fl-search {
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0
+    }
+
+    .fl-sinput {
+      width: 100%;
+      background: #efefef;
+      border: none;
+      outline: none;
+      border-radius: 8px;
+      padding: 8px 12px;
+      font-size: 14px;
+      font-family: 'Nunito', sans-serif;
+      color: var(--dark)
+    }
+
+    .fl-sinput::placeholder {
+      color: var(--gray)
+    }
+
+    .fl-list {
+      overflow-y: auto;
+      flex: 1;
+      scrollbar-width: thin;
+      scrollbar-color: #ddd transparent
+    }
+
+    .fl-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 16px;
+      transition: background .15s;
+      cursor: pointer
+    }
+
+    .fl-item:hover {
+      background: #fafafa
+    }
+
+    .fl-av {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      flex-shrink: 0;
+      border: 1px solid #efefef
+    }
+
+    .fl-info {
+      flex: 1;
+      min-width: 0
+    }
+
+    .fl-un {
+      font-size: 14px;
+      font-weight: 700;
+      display: block;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap
+    }
+
+    .fl-name {
+      font-size: 13px;
+      color: var(--gray);
+      display: block;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap
+    }
+
+    .fl-btn {
+      padding: 6px 16px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 700;
+      flex-shrink: 0;
+      transition: all .15s
+    }
+
+    .fl-btn.follow {
+      background: var(--blue);
+      color: #fff
+    }
+
+    .fl-btn.follow:hover {
+      background: #1877f2
+    }
+
+    .fl-btn.following {
+      background: #efefef;
+      color: var(--dark)
+    }
+
+    .fl-btn.following:hover {
+      background: #e0e0e0
+    }
+
+    .fl-btn.remove {
+      background: #efefef;
+      color: var(--dark)
+    }
+
+    .fl-btn.remove:hover {
+      background: #e0e0e0
+    }
+
+    .fl-empty {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 40px 20px;
+      color: var(--gray);
+      font-size: 14px
+    }
+
+    .fl-empty svg {
+      width: 40px;
+      height: 40px;
+      stroke: var(--gray);
+      fill: none
+    }
+
+    .eo {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, .55);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 300;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .22s;
+      padding: 16px
+    }
+
+    .eo.open {
+      opacity: 1;
+      pointer-events: all
+    }
+
+    .ebox {
+      background: #fff;
+      border-radius: 12px;
+      padding: 26px;
+      width: 100%;
+      max-width: 390px;
+      animation: pop .22s ease both
+    }
+
+    .etitle {
+      font-size: 16px;
+      font-weight: 800;
+      text-align: center;
+      margin-bottom: 18px
+    }
+
+    .eavrow {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 6px
+    }
+
+    .eav {
+      width: 76px;
+      height: 76px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #ffd6e7, #c3d5ff);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 38px;
+      cursor: pointer;
+      border: 2px solid var(--border);
+      transition: opacity .15s
+    }
+
+    .eav:hover {
+      opacity: .8
+    }
+
+    .eavbtn {
+      font-size: 13px;
+      color: var(--blue);
+      font-weight: 700;
+      text-align: center;
+      margin-bottom: 14px;
+      cursor: pointer
+    }
+
+    .efi {
+      margin-bottom: 11px
+    }
+
+    .elbl {
+      font-size: 12px;
+      font-weight: 700;
+      display: block;
+      margin-bottom: 3px
+    }
+
+    .einput {
+      width: 100%;
+      padding: 8px 11px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 14px;
+      font-family: 'Nunito', sans-serif;
+      outline: none;
+      background: #fafafa;
+      transition: border-color .2s
+    }
+
+    .einput:focus {
+      border-color: #a8a8a8;
+      background: #fff
+    }
+
+    .eta {
+      resize: none;
+      height: 76px;
+      line-height: 1.5
+    }
+
+    .ebtns {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+      margin-top: 14px
+    }
+
+    .ecancel {
+      padding: 7px 16px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 700;
+      transition: background .15s
+    }
+
+    .ecancel:hover {
+      background: #f5f5f5
+    }
+
+    .esave {
+      padding: 7px 18px;
+      background: var(--blue);
+      color: #fff;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 700;
+      transition: background .15s
+    }
+
+    .esave:hover {
+      background: #1877f2
+    }
+
+    .empty {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      padding: 60px 20px;
+      color: var(--gray)
+    }
+
+    .empty-icon {
+      width: 62px;
+      height: 62px;
+      border-radius: 50%;
+      border: 2px solid var(--gray);
+      display: flex;
+      align-items: center;
+      justify-content: center
+    }
+
+    .empty-icon svg {
+      width: 30px;
+      height: 30px;
+      stroke: var(--gray)
+    }
+
+    .empty-title {
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--dark)
+    }
+
+    .empty-sub {
+      font-size: 14px;
+      text-align: center;
+      max-width: 220px;
+      line-height: 1.5
+    }
+
+    @media(max-width:620px) {
+      .ph {
+        flex-direction: column;
+        align-items: center;
+        gap: 16px;
+        text-align: center
+      }
+
+      .pstats {
+        justify-content: center
+      }
+
+      .ptop {
+        justify-content: center
+      }
+
+      .av-ring {
+        width: 86px;
+        height: 86px
+      }
+
+      .av-inner {
+        font-size: 38px
+      }
+
+      .tbtn {
+        padding: 11px 10px;
+        font-size: 10px;
+        gap: 3px
+      }
+
+      .ph {
+        gap: 14px
+      }
+
+      .mbox {
+        flex-direction: column
+      }
+
+      .mimg {
+        width: 100%;
+        min-height: 240px;
+        font-size: 60px
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <nav>
+    <span class="logo">Instagram</span>
+    <div class="nicons">
+      <a href="{% url 'home' %}" class="nibtn" title="Home" data-pjax>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <path d="M3 9.5L12 3l9 6.5V20a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V9.5z" />
+          <path d="M9 21V12h6v9" />
+        </svg>
+      </a>
+      <a href="{% url 'messages' %}" class="nibtn" title="Messages">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+        </svg>
+      </a>
+      <a href="{% url 'search' %}" class="nibtn" title="Search">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <circle cx="11" cy="11" r="8" />
+          <line x1="21" y1="21" x2="16.65" y2="16.65" />
+        </svg>
+      </a>
+      <a href="{% url 'profile' request.user.username %}" class="navat" title="Profile" data-pjax>
+        {% if request.user.profile and request.user.profile.profile_image %}
+        <img src="{{ request.user.profile.profile_image.url }}" alt="{{ request.user.username }}">
+        {% else %}
+        <div style="font-size:13px">🧑</div>
+        {% endif %}
+      </a>
+    </div>
+  </nav>
+
+  <div class="page">
+    <div class="ph">
+      <!-- Avatar -->
+      <div class="av-wrap">
+        <div class="av-ring">
+          <div class="av-inner">
+            {% if profile_user.profile and profile_user.profile.profile_image %}
+            <img src="{{ profile_user.profile.profile_image.url }}" alt="{{ profile_user.username }}"
+              style="width:100%;height:100%;object-fit:cover;border-radius:50%">
+            {% else %}
+            🧑
+            {% endif %}
+          </div>
+        </div>
+        {% if profile_user == request.user %}
+        <div class="av-plus">+</div>
+        {% endif %}
+      </div>
+
+      <div class="pinfo">
+        <div class="ptop">
+          <span class="pun">{{ profile_user.username }}</span>
+          <div class="pbtns">
+            {% if profile_user == request.user %}
+            {# Own profile — show Edit buttons #}
+            <button class="bedit" onclick="openEdit()">Edit profile</button>
+            <button class="bedit">View archive</button>
+            <div class="bmore-wrap">
+              <button class="bmore" id="bmoreBtn" onclick="toggleMoreMenu(event)">⋯</button>
+              <div class="bmore-menu" id="bmoreMenu">
+                <button class="bmitem" onclick="openEdit();closeMoreMenu()">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                  </svg>
+                  Edit profile
+                </button>
+                <form method="POST" action="{% url 'logout' %}">
+                  {% csrf_token %}
+                  <button type="submit" class="bmitem danger">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                      <polyline points="16 17 21 12 16 7" />
+                      <line x1="21" y1="12" x2="9" y2="12" />
+                    </svg>
+                    Log out
+                  </button>
+                </form>
+              </div>
+            </div>
+            {% else %}
+            {# Someone else's profile #}
+            {% if is_following %}
+            <form method="POST" action="{% url 'follow_user' profile_user.username %}" style="display:inline">
+              {% csrf_token %}
+              <button type="submit" class="bedit" style="background:#efefef">Following</button>
+            </form>
+            {% elif has_sent_request %}
+            <button class="bedit" style="background:#efefef;cursor:default" disabled>Requested</button>
+            {% else %}
+            <form method="POST" action="{% url 'follow_user' profile_user.username %}" style="display:inline">
+              {% csrf_token %}
+              <button type="submit" class="bedit"
+                style="background:#0095f6;color:#fff;border-color:#0095f6">Follow</button>
+            </form>
+            {% endif %}
+            <button class="bedit">Message</button>
+            {% endif %}
+          </div>
+        </div>
+
+        <div class="pstats">
+          <div class="stat"><span class="snum">{{ posts.count }}</span><span class="slbl">posts</span></div>
+          <div class="stat stat-link" onclick="openFL('followers')">
+            <span class="snum">{{ followers_count }}</span><span class="slbl">followers</span>
+          </div>
+          <div class="stat stat-link" onclick="openFL('following')">
+            <span class="snum">{{ following_count }}</span><span class="slbl">following</span>
+          </div>
+        </div>
+
+        <div class="pbio">
+          {% if profile_user.get_full_name %}
+          <span class="bname">{{ profile_user.get_full_name }}</span>
+          {% endif %}
+          {% if profile_user.profile and profile_user.profile.bio %}
+          <span class="bdesc">{{ profile_user.profile.bio }}</span>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <div class="hlwrap">
+      <div class="hli hladd">
+        <div class="hlring">
+          <div class="hlin" style="background:#fafafa"><svg viewBox="0 0 24 24" fill="none" stroke="#bbb"
+              stroke-width="1.5" width="26" height="26">
+              <line x1="12" y1="5" x2="12" y2="19" />
+              <line x1="5" y1="12" x2="19" y2="12" />
+            </svg></div>
+        </div><span class="hlname">New</span>
+      </div>
+      <div class="hli">
+        <div class="hlring">
+          <div class="hlin" style="background:linear-gradient(135deg,#ffd6e7,#ffb3ba)">🌅</div>
+        </div><span class="hlname">Travel</span>
+      </div>
+      <div class="hli">
+        <div class="hlring">
+          <div class="hlin" style="background:linear-gradient(135deg,#c3d5ff,#a8c8ff)">📸</div>
+        </div><span class="hlname">Photography</span>
+      </div>
+      <div class="hli">
+        <div class="hlring">
+          <div class="hlin" style="background:linear-gradient(135deg,#d6ffd8,#b3f0b5)">🌿</div>
+        </div><span class="hlname">Nature</span>
+      </div>
+      <div class="hli">
+        <div class="hlring">
+          <div class="hlin" style="background:linear-gradient(135deg,#fff3b3,#ffe0a8)">☕</div>
+        </div><span class="hlname">Coffee</span>
+      </div>
+      <div class="hli">
+        <div class="hlring">
+          <div class="hlin" style="background:linear-gradient(135deg,#e8d5ff,#d0b0ff)">🎨</div>
+        </div><span class="hlname">Art</span>
+      </div>
+      <div class="hli">
+        <div class="hlring">
+          <div class="hlin" style="background:linear-gradient(135deg,#ffecd2,#fcb69f)">🍕</div>
+        </div><span class="hlname">Food</span>
+      </div>
+    </div>
+
+    <div class="tabs">
+      <button class="tbtn active" onclick="showTab('posts',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="3" width="7" height="7" />
+          <rect x="14" y="3" width="7" height="7" />
+          <rect x="3" y="14" width="7" height="7" />
+          <rect x="14" y="14" width="7" height="7" />
+        </svg>POSTS
+      </button>
+      <button class="tbtn" onclick="showTab('reels',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polygon points="5 3 19 12 5 21 5 3" />
+        </svg>REELS
+      </button>
+      <button class="tbtn" onclick="showTab('saved',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
+        </svg>SAVED
+      </button>
+      <button class="tbtn" onclick="showTab('tagged',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z" />
+          <line x1="7" y1="7" x2="7.01" y2="7" />
+        </svg>TAGGED
+      </button>
+    </div>
+    {# ── Post Grid (real posts from DB) ── #}
+    <div class="grid" id="grid">
+      {% for post in posts %}
+      <div class="gi" onclick="openPost('{{ post.id }}')">
+        {% if post.image %}
+        <img src="{{ post.image.url }}" alt="{{ post.caption|truncatechars:40 }}"
+          style="width:100%;height:100%;object-fit:cover;">
+        {% else %}
+        <div class="gf c{{ forloop.counter|add:0 }}">📷</div>
+        {% endif %}
+        <div class="gover">
+          <div class="ostat">
+            <svg viewBox="0 0 24 24">
+              <path
+                d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+            </svg>
+            {{ post.like_set.count }}
+          </div>
+          <div class="ostat">
+            <svg viewBox="0 0 24 24">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+            </svg>
+            {{ post.comment_set.count }}
+          </div>
+        </div>
+      </div>
+      {% empty %}
+      <div class="empty" style="grid-column:1/-1">
+        <div class="empty-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5">
+            <rect x="3" y="3" width="18" height="18" rx="2" />
+            <circle cx="8.5" cy="8.5" r="1.5" />
+            <polyline points="21 15 16 10 5 21" />
+          </svg>
+        </div>
+        <div class="empty-title">No posts yet</div>
+        <div class="empty-sub">When {{ profile_user.username }} shares photos, they'll appear here.</div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- POST MODAL -->
+  <div class="mo" id="postMo" onclick="if(event.target===this)closePM()">
+    <div class="mclose" onclick="closePM()">✕</div>
+    <div class="mbox" id="mbox"></div>
+  </div>
+
+  <!-- FOLLOWERS / FOLLOWING MODAL -->
+  <div class="fl-overlay" id="flOverlay" onclick="if(event.target===this)closeFL()">
+    <div class="fl-box">
+      <div class="fl-header">
+        <div style="width:28px"></div>
+        <span class="fl-title" id="flTitle">Followers</span>
+        <button class="fl-close" onclick="closeFL()">✕</button>
+      </div>
+      <div class="fl-tabs" id="flTabs">
+        <button class="fl-tab active" id="flTab0" onclick="switchFLTab('followers')">Followers</button>
+        <button class="fl-tab" id="flTab1" onclick="switchFLTab('following')">Following</button>
+      </div>
+      <div class="fl-search">
+        <input class="fl-sinput" id="flSearch" type="text" placeholder="Search" oninput="filterFL()">
+      </div>
+      <div class="fl-list" id="flList"></div>
+    </div>
+  </div>
+
+  <!-- EDIT MODAL -->
+  <div class="eo" id="editMo" onclick="if(event.target===this)closeEM()">
+    <div class="ebox" onclick="event.stopPropagation()">
+      <div class="etitle">Edit Profile</div>
+      <div class="eavrow">
+        <div class="eav" id="editAv" onclick="cycleAv()">🧑</div>
+      </div>
+      <div class="eavbtn" onclick="cycleAv()">Change profile photo</div>
+      <div class="efi"><label class="elbl">Name</label><input class="einput" id="eName" value="Your Name ✨"></div>
+      <div class="efi"><label class="elbl">Username</label><input class="einput" id="eUser" value="your_username"
+          oninput="this.value=this.value.replace(/[^a-z0-9._]/gi,'').toLowerCase()"></div>
+      <div class="efi"><label class="elbl">Bio</label><textarea class="einput eta"
+          id="eBio">📸 Capturing moments that matter 🌍 Traveller | 🎨 Artist | ☕ Coffee addict</textarea></div>
+      <div class="efi"><label class="elbl">Website</label><input class="einput" id="eLink" value="linktr.ee/yourname">
+      </div>
+      <div class="ebtns">
+        <button class="ecancel" onclick="closeEM()">Cancel</button>
+        <button class="esave" onclick="saveProfile()">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /* ── Real followers/following data from Django ── */
+    const followersData = [
+      {% for u in followers_list %}
+    {
+      un: "{{ u.username }}",
+        name: "{{ u.get_full_name|default:u.username }}",
+          av: "{% if u.profile and u.profile.profile_image %}<img src='{{ u.profile.profile_image.url }}' style='width:100%;height:100%;object-fit:cover;border-radius:50%'>{% else %}🧑{% endif %}",
+            bg: "linear-gradient(135deg,#ffd6e7,#a8c8ff)"
+    } {% if not forloop.last %}, {% endif %}
+    {% endfor %}
+    ];
+
+    const followingData = [
+      {% for u in following_list %}
+    {
+      un: "{{ u.username }}",
+        name: "{{ u.get_full_name|default:u.username }}",
+          av: "{% if u.profile and u.profile.profile_image %}<img src='{{ u.profile.profile_image.url }}' style='width:100%;height:100%;object-fit:cover;border-radius:50%'>{% else %}🧑{% endif %}",
+            bg: "linear-gradient(135deg,#ffd6e7,#a8c8ff)"
+    } {% if not forloop.last %}, {% endif %}
+    {% endfor %}
+    ];
+
+    let currentFLTab = 'followers';
+
+    /* ── Followers Modal controls ── */
+    function openFL(tab) {
+      currentFLTab = tab;
+      document.getElementById('flSearch').value = '';
+      document.getElementById('flOverlay').classList.add('open');
+      document.body.style.overflow = 'hidden';
+      switchFLTab(tab);
+    }
+
+    function closeFL() {
+      document.getElementById('flOverlay').classList.remove('open');
+      document.body.style.overflow = '';
+    }
+
+    function switchFLTab(tab) {
+      currentFLTab = tab;
+      document.getElementById('flTitle').textContent = tab === 'followers' ? 'Followers' : 'Following';
+      document.getElementById('flTab0').classList.toggle('active', tab === 'followers');
+      document.getElementById('flTab1').classList.toggle('active', tab === 'following');
+      document.getElementById('flSearch').value = '';
+      renderFLList('');
+    }
+
+    function filterFL() {
+      renderFLList(document.getElementById('flSearch').value.toLowerCase().trim());
+    }
+
+
+    function renderFLList(q) {
+      const data = currentFLTab === 'followers' ? followersData : followingData;
+      const filtered = q ? data.filter(u => u.un.toLowerCase().includes(q) || u.name.toLowerCase().includes(q)) : data;
+      const list = document.getElementById('flList');
+
+
+      if (!filtered.length) {
+        list.innerHTML = `<div class="fl-empty"><svg viewBox="0 0 24 24" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><span>No results found</span></div>`;
+        return;
+      }
+
+      list.innerHTML = filtered.map(u => {
+        const avHTML = u.av.startsWith('<img') ? `<div class="fl-av" style="background:${u.bg};overflow:hidden;padding:0">${u.av}</div>` :
+          `<div class="fl-av" style="background:${u.bg}">${u.av}</div>`;
+        const btnHTML = currentFLTab === 'following'
+          ? `<a href="/profile/${u.un}/" class="fl-btn following" style="text-decoration:none">Following</a>`
+          : `<a href="/profile/${u.un}/" class="fl-btn follow" style="text-decoration:none">View</a>`;
+        return `<a href="/profile/${u.un}/" class="fl-item" style="text-decoration:none;color:inherit">
+          ${avHTML}
+          <div class="fl-info">
+            <span class="fl-un">${u.un}</span>
+            <span class="fl-name">${u.name}</span>
+          </div>
+          ${btnHTML}
+        </a>`;
+      }).join('');
+    }
+
+    /* ── Post Modal (simplified for server-rendered posts) ── */
+    let liked = false;
+
+    function openPost(id) {
+      // For now just scroll to post or open a simple overlay
+      // Full post detail modal can be implemented with a separate view
+      document.getElementById('postMo').classList.add('open');
+      document.body.style.overflow = 'hidden';
+      document.getElementById('mbox').innerHTML = `
+    <div class="mimg" style="background:linear-gradient(135deg,#a8edea,#fed6e3)">📸</div>
+    <div class="mside">
+      <div class="mhead">
+        <div class="mav" style="background:linear-gradient(135deg,#a8edea,#fed6e3)">🧑</div>
+        <span class="mun">{{ profile_user.username }}</span>
+        <button style="font-size:18px;color:var(--gray);padding:4px;cursor:pointer">•••</button>
+      </div>
+      <div class="mcmts" style="display:flex;align-items:center;justify-content:center;color:#8e8e8e;font-size:14px">
+        Loading post details…
+      </div>
+      <div class="minrow">
+        <input class="minput" placeholder="Add a comment…">
+        <button class="mpostbtn">Post</button>
+      </div>
+    </div>`;
+    }
+
+
+
+    function toggleLike(base) {
+      liked = !liked;
+      const btn = document.getElementById('mlbtn');
+      const svg = btn.querySelector('svg');
+      svg.setAttribute('fill', liked ? '#ff3040' : 'none');
+      svg.setAttribute('stroke', liked ? '#ff3040' : 'currentColor');
+      btn.style.transform = 'scale(1.4)';
+      setTimeout(() => btn.style.transform = '', 200);
+      document.getElementById('mlikesEl').textContent = fn(base + (liked ? 1 : 0)) + ' likes';
+    }
+
+    function closePM() {
+      document.getElementById('postMo').classList.remove('open');
+      document.body.style.overflow = '';
+    }
+
+    function openEdit() {
+      document.getElementById('editMo').classList.add('open');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeEM() {
+      document.getElementById('editMo').classList.remove('open');
+      document.body.style.overflow = '';
+    }
+
+    function saveProfile() {
+      const n = document.getElementById('eName').value.trim();
+      const u = document.getElementById('eUser').value.trim();
+      const b = document.getElementById('eBio').value.trim();
+      const l = document.getElementById('eLink').value.trim();
+      if (n) document.getElementById('dispName').textContent = n;
+      if (u) { document.getElementById('dispUser').textContent = u; document.title = 'Instagram • ' + u; }
+      if (b) document.getElementById('dispBio').innerHTML = b.replace(/\n/g, '<br>');
+      if (l) document.getElementById('dispLink').lastChild.textContent = ' ' + l;
+      closeEM();
+    }
+
+    function cycleAv() {
+      avIdx = (avIdx + 1) % avList.length;
+      const e = avList[avIdx];
+      document.getElementById('editAv').textContent = e;
+      document.getElementById('mainAv').textContent = e;
+      document.getElementById('navAv').textContent = e;
+    }
+
+    renderGrid(posts);
+
+    function toggleMoreMenu(e) {
+      e.stopPropagation();
+      document.getElementById('bmoreMenu').classList.toggle('open');
+    }
+
+    function closeMoreMenu() {
+      document.getElementById('bmoreMenu').classList.remove('open');
+    }
+
+    function handleLogout() {
+      closeMoreMenu();
+      // Show a confirmation toast then simulate logout
+      const toast = document.createElement('div');
+      toast.style.cssText = 'position:fixed;bottom:28px;left:50%;transform:translateX(-50%);background:#262626;color:#fff;padding:12px 24px;border-radius:24px;font-size:14px;font-weight:600;z-index:999;opacity:0;transition:opacity .25s';
+      toast.textContent = 'Logging out…';
+      document.body.appendChild(toast);
+      requestAnimationFrame(() => { toast.style.opacity = '1'; });
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        setTimeout(() => toast.remove(), 300);
+        // Replace with your actual logout URL e.g. window.location.href='/logout/';
+        alert('Logged out! (Replace this with your actual logout redirect.)');
+      }, 1200);
+    }
+
+    document.addEventListener('click', function (e) {
+      const menu = document.getElementById('bmoreMenu');
+      const btn = document.getElementById('bmoreBtn');
+      if (menu && !menu.contains(e.target) && e.target !== btn) closeMoreMenu();
+    });
+  </script>
+
+  <!-- ══ PJAX: Smooth navigation without full page reload ══ -->
+  <script>
+    (function () {
+      function makeBar() {
+        var b = document.getElementById('pjax-bar');
+        if (!b) {
+          b = document.createElement('div');
+          b.id = 'pjax-bar';
+          b.style.cssText = 'position:fixed;top:0;left:0;height:2px;width:0;background:linear-gradient(90deg,#0095f6,#c13584);z-index:99999;transition:width .3s ease,opacity .3s ease;border-radius:0 2px 2px 0;pointer-events:none';
+          document.body.appendChild(b);
+        }
+        return b;
+      }
+      function showBar() { var b = makeBar(); b.style.opacity = '1'; b.style.width = '65%'; }
+      function doneBar() { var b = makeBar(); b.style.width = '100%'; setTimeout(function () { b.style.opacity = '0'; setTimeout(function () { b.style.width = '0'; }, 300); }, 200); }
+
+      window._pjaxLoading = false;
+      window.pjaxLoad = function (url) {
+        if (window._pjaxLoading || url === window.location.href) return;
+        window._pjaxLoading = true;
+        showBar();
+        document.body.style.opacity = '0.85';
+        document.body.style.transition = 'opacity 0.15s';
+
+        fetch(url, { credentials: 'same-origin' })
+          .then(function (r) { return r.text(); })
+          .then(function (html) {
+            var parser = new DOMParser();
+            var doc = parser.parseFromString(html, 'text/html');
+
+            var existingStyles = Array.from(document.head.querySelectorAll('style')).map(function (s) { return s.textContent.trim(); });
+            doc.head.querySelectorAll('style').forEach(function (newStyle) {
+              var txt = newStyle.textContent.trim();
+              if (!existingStyles.includes(txt)) {
+                var clone = document.createElement('style');
+                clone.textContent = txt;
+                document.head.appendChild(clone);
+              }
+            });
+
+            document.body.innerHTML = doc.body.innerHTML;
+            document.title = doc.title;
+            history.pushState({ pjax: url }, doc.title, url);
+
+            document.body.querySelectorAll('script').forEach(function (old) {
+              if (old.src) return;
+              var s = document.createElement('script');
+              s.textContent = old.textContent;
+              document.head.appendChild(s);
+            });
+
+            doneBar();
+            document.body.style.opacity = '1';
+            window.scrollTo(0, 0);
+            window._pjaxLoading = false;
+            attachPjax();
+          })
+          .catch(function () {
+            window._pjaxLoading = false;
+            window.location.href = url;
+          });
+      };
+
+      function attachPjax() {
+        document.removeEventListener('click', handlePjaxClick);
+        document.addEventListener('click', handlePjaxClick);
+      }
+      function handlePjaxClick(e) {
+        var a = e.target.closest('[data-pjax]');
+        if (!a || !a.href) return;
+        try { var u = new URL(a.href); if (u.origin !== window.location.origin) return; }
+        catch (ex) { return; }
+        e.preventDefault();
+        window.pjaxLoad(a.href);
+      }
+
+      window.addEventListener('popstate', function () {
+        window.pjaxLoad(window.location.href);
+      });
+
+      attachPjax();
+    })();
+  </script>
+
+</body>
+
+</html>

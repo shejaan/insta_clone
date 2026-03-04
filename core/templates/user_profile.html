@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>sophiaa • Instagram</title>
+<link href="https://fonts.googleapis.com/css2?family=Grand+Hotel&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--grad:linear-gradient(45deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888);--blue:#0095f6;--border:#dbdbdb;--gray:#8e8e8e;--dark:#262626;--bg:#fafafa;--wh:#fff;--nav:56px}
+body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--dark);min-height:100vh}
+button{cursor:pointer;border:none;background:none;font-family:inherit}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+
+/* NAV */
+nav{position:fixed;top:0;left:0;right:0;height:var(--nav);background:var(--wh);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;padding:0 16px;z-index:100}
+.nav-back{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;transition:background .15s;flex-shrink:0}
+.nav-back:hover{background:#f0f0f0}
+.nav-back svg{width:22px;height:22px;stroke:var(--dark);fill:none;stroke-width:2}
+.nav-un{font-size:17px;font-weight:800;flex:1}
+.nav-more{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;color:var(--dark);transition:background .15s}
+.nav-more:hover{background:#f0f0f0}
+
+/* PAGE */
+.page{max-width:935px;margin:0 auto;padding:calc(var(--nav) + 20px) 16px 60px;animation:fadeIn .25s ease both}
+
+/* PROFILE HEADER */
+.p-header{display:flex;align-items:flex-start;gap:40px;padding-bottom:24px;border-bottom:1px solid var(--border)}
+.av-ring{width:96px;height:96px;border-radius:50%;background:var(--grad);padding:3px;flex-shrink:0}
+.av-inner{width:100%;height:100%;border-radius:50%;border:3px solid #fff;background:linear-gradient(135deg,#ffd6e7,#ffb3ba);display:flex;align-items:center;justify-content:center;font-size:42px}
+.p-info{flex:1;min-width:0}
+.p-top{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:16px}
+.p-un{font-size:20px;font-weight:400}
+
+/* FOLLOW BUTTON */
+.follow-btn{padding:7px 22px;border-radius:8px;font-size:14px;font-weight:700;transition:all .2s;min-width:100px;text-align:center}
+.follow-btn.follow{background:var(--blue);color:#fff}
+.follow-btn.follow:hover{background:#1877f2}
+.follow-btn.requested{background:#efefef;color:var(--dark);border:1px solid var(--border)}
+.follow-btn.following{background:#efefef;color:var(--dark);border:1px solid var(--border)}
+.follow-btn.following:hover{background:#e0e0e0}
+.msg-btn{padding:7px 22px;border-radius:8px;font-size:14px;font-weight:700;background:#efefef;color:var(--dark);border:1px solid var(--border);transition:background .15s}
+.msg-btn:hover{background:#e0e0e0}
+
+/* STATS */
+.p-stats{display:flex;gap:30px;margin-bottom:14px}
+.stat{display:flex;flex-direction:column;align-items:center}
+.stat-num{font-size:17px;font-weight:800;line-height:1.2}
+.stat-lbl{font-size:13px;color:var(--dark)}
+
+/* BIO */
+.p-bio-name{font-size:14px;font-weight:800;display:block;margin-bottom:2px}
+.p-bio-cat{font-size:13px;color:var(--gray);display:block;margin-bottom:4px}
+.p-bio-desc{font-size:14px;line-height:1.55;display:block}
+
+/* HIGHLIGHTS */
+.hl-wrap{display:flex;gap:18px;overflow-x:auto;scrollbar-width:none;padding:16px 0;border-bottom:1px solid var(--border)}
+.hl-wrap::-webkit-scrollbar{display:none}
+.hl-item{display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;flex-shrink:0;transition:transform .15s}
+.hl-item:hover{transform:scale(1.05)}
+.hl-ring{width:58px;height:58px;border-radius:50%;border:1px solid var(--border);padding:2px}
+.hl-in{width:100%;height:100%;border-radius:50%;border:2px solid #fff;display:flex;align-items:center;justify-content:center;font-size:24px}
+.hl-name{font-size:11px;max-width:64px;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* TABS */
+.tabs{display:flex;justify-content:center;border-bottom:1px solid var(--border)}
+.tab-btn{display:flex;align-items:center;gap:5px;padding:12px 24px;font-size:11px;font-weight:700;color:var(--gray);letter-spacing:1px;border-bottom:2px solid transparent;margin-bottom:-1px;transition:color .15s,border-color .15s}
+.tab-btn.active{color:var(--dark);border-bottom-color:var(--dark)}
+.tab-btn:hover{color:var(--dark)}
+.tab-btn svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2}
+
+/* GRID */
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:3px;margin-top:3px;animation:fadeUp .3s ease both}
+.gi{aspect-ratio:1;overflow:hidden;position:relative;cursor:pointer}
+.gi-inner{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:44px;transition:transform .3s}
+.gi:hover .gi-inner{transform:scale(1.08)}
+.gi-over{position:absolute;inset:0;background:rgba(0,0,0,.3);display:flex;align-items:center;justify-content:center;gap:16px;opacity:0;transition:opacity .2s}
+.gi:hover .gi-over{opacity:1}
+.gi-stat{display:flex;align-items:center;gap:4px;color:#fff;font-size:13px;font-weight:700}
+.gi-stat svg{width:15px;height:15px;fill:#fff}
+.c1{background:linear-gradient(135deg,#ffd6e7,#ffb3ba)}
+.c2{background:linear-gradient(135deg,#c3d5ff,#a8c8ff)}
+.c3{background:linear-gradient(135deg,#d6ffd8,#b3f0b5)}
+.c4{background:linear-gradient(135deg,#fff3b3,#ffe0a8)}
+.c5{background:linear-gradient(135deg,#e8d5ff,#d0b0ff)}
+.c6{background:linear-gradient(135deg,#ffecd2,#fcb69f)}
+.c7{background:linear-gradient(135deg,#a8edea,#fed6e3)}
+.c8{background:linear-gradient(135deg,#d4fc79,#96e6a1)}
+.c9{background:linear-gradient(135deg,#fbc2eb,#a6c1ee)}
+
+@media(max-width:540px){
+  .p-header{flex-direction:column;align-items:center;gap:14px;text-align:center}
+  .p-top{justify-content:center}
+  .p-stats{gap:20px;justify-content:center}
+  .av-ring{width:80px;height:80px}
+  .av-inner{font-size:34px}
+  .tab-btn{padding:10px 14px;font-size:10px}
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <button class="nav-back" onclick="history.back()" title="Back">
+    <svg viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+  </button>
+  <span class="nav-un">sophiaa</span>
+  <button class="nav-more">⋯</button>
+</nav>
+
+<div class="page">
+
+  <!-- HEADER -->
+  <div class="p-header">
+    <div class="av-ring"><div class="av-inner">🌸</div></div>
+    <div class="p-info">
+      <div class="p-top">
+        <span class="p-un">sophiaa</span>
+        <button class="follow-btn follow" id="followBtn" onclick="toggleFollow()">Follow</button>
+        <button class="msg-btn">Message</button>
+      </div>
+      <div class="p-stats">
+        <div class="stat"><span class="stat-num">47</span><span class="stat-lbl">posts</span></div>
+        <div class="stat"><span class="stat-num" id="follCount">12.4k</span><span class="stat-lbl">followers</span></div>
+        <div class="stat"><span class="stat-num">382</span><span class="stat-lbl">following</span></div>
+      </div>
+      <span class="p-bio-name">Sophia Rose ✨</span>
+      <span class="p-bio-cat">Creator · Travel</span>
+      <span class="p-bio-desc">Living for sunsets & good coffee ☕<br>📍 Santorini → NYC → Everywhere</span>
+    </div>
+  </div>
+
+  <!-- HIGHLIGHTS -->
+  <div class="hl-wrap">
+    <div class="hl-item"><div class="hl-ring"><div class="hl-in" style="background:linear-gradient(135deg,#ffd6e7,#ffb3ba)">🌅</div></div><span class="hl-name">Travel</span></div>
+    <div class="hl-item"><div class="hl-ring"><div class="hl-in" style="background:linear-gradient(135deg,#c3d5ff,#a8c8ff)">📸</div></div><span class="hl-name">Photos</span></div>
+    <div class="hl-item"><div class="hl-ring"><div class="hl-in" style="background:linear-gradient(135deg,#d6ffd8,#b3f0b5)">🌿</div></div><span class="hl-name">Nature</span></div>
+    <div class="hl-item"><div class="hl-ring"><div class="hl-in" style="background:linear-gradient(135deg,#fff3b3,#ffe0a8)">☕</div></div><span class="hl-name">Coffee</span></div>
+    <div class="hl-item"><div class="hl-ring"><div class="hl-in" style="background:linear-gradient(135deg,#e8d5ff,#d0b0ff)">🎨</div></div><span class="hl-name">Art</span></div>
+    <div class="hl-item"><div class="hl-ring"><div class="hl-in" style="background:linear-gradient(135deg,#ffecd2,#fcb69f)">🍕</div></div><span class="hl-name">Food</span></div>
+  </div>
+
+  <!-- TABS -->
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab(this,'posts')">
+      <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>POSTS
+    </button>
+    <button class="tab-btn" onclick="switchTab(this,'reels')">
+      <svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>REELS
+    </button>
+    <button class="tab-btn" onclick="switchTab(this,'tagged')">
+      <svg viewBox="0 0 24 24"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>TAGGED
+    </button>
+  </div>
+
+  <!-- POST GRID -->
+  <div class="grid" id="grid">
+    <!-- POSTS tab -->
+    <div class="gi post-item"><div class="gi-inner c1">🌅</div><div class="gi-over"><div class="gi-stat"><svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>1,204</div><div class="gi-stat"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>47</div></div></div>
+    <div class="gi post-item"><div class="gi-inner c2">🌊</div><div class="gi-over"><div class="gi-stat"><svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>876</div><div class="gi-stat"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>31</div></div></div>
+    <div class="gi post-item reel-item"><div class="gi-inner c3">🏔️</div><div class="gi-over"><div class="gi-stat"><svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>2,341</div><div class="gi-stat"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>88</div></div></div>
+    <div class="gi post-item tagged-item"><div class="gi-inner c4">☕</div><div class="gi-over"><div class="gi-stat"><svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>543</div><div class="gi-stat"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>22</div></div></div>
+    <div class="gi post-item reel-item"><div class="gi-inner c5">🎨</div><div class="gi-over"><div class="gi-stat"><svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>1,876</div><div class="gi-stat"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>64</div></div></div>
+    <div class="gi post-item tagged-item"><div class="gi-inner c6">🌸</div><div class="gi-over"><div class="gi-stat"><svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>992</div><div class="gi-stat"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>38</div></div></div>
+    <div class="gi post-item"><div class="gi-inner c7">🍕</div><div class="gi-over"><div class="gi-stat"><svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>731</div><div class="gi-stat"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>29</div></div></div>
+    <div class="gi post-item reel-item"><div class="gi-inner c8">🌿</div><div class="gi-over"><div class="gi-stat"><svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>1,123</div><div class="gi-stat"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>51</div></div></div>
+    <div class="gi post-item tagged-item"><div class="gi-inner c9">🦋</div><div class="gi-over"><div class="gi-stat"><svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>654</div><div class="gi-stat"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>18</div></div></div>
+  </div>
+
+</div>
+
+<script>
+/* ── Follow button (3 states) ── */
+let state = 'none';
+let followers = 12400;
+let timer = null;
+
+function fmt(n){return n>=1000?(n/1000).toFixed(1).replace(/\.0$/,'')+'k':n}
+
+function toggleFollow(){
+  const btn = document.getElementById('followBtn');
+  if(state==='none'){
+    state='requested';
+    btn.textContent='Requested';
+    btn.className='follow-btn requested';
+    clearTimeout(timer);
+    timer=setTimeout(()=>{
+      if(state==='requested'){
+        state='following';
+        btn.textContent='Following ▾';
+        btn.className='follow-btn following';
+        followers++;
+        document.getElementById('follCount').textContent=fmt(followers);
+      }
+    },1500);
+  } else if(state==='requested'){
+    clearTimeout(timer);
+    state='none';
+    btn.textContent='Follow';
+    btn.className='follow-btn follow';
+  } else if(state==='following'){
+    state='none';
+    btn.textContent='Follow';
+    btn.className='follow-btn follow';
+    followers=Math.max(0,followers-1);
+    document.getElementById('follCount').textContent=fmt(followers);
+  }
+}
+
+/* ── Tabs ── */
+function switchTab(btn, tab){
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  const all   = document.querySelectorAll('.gi');
+  const reels = document.querySelectorAll('.reel-item');
+  const tagged= document.querySelectorAll('.tagged-item');
+  all.forEach(el=>el.style.display='none');
+  if(tab==='posts')        all.forEach(el=>el.style.display='');
+  else if(tab==='reels')   reels.forEach(el=>el.style.display='');
+  else if(tab==='tagged')  tagged.forEach(el=>el.style.display='');
+}
+</script>
+</body>
+</html>

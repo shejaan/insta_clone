@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Search • Instagram</title>
+<link href="https://fonts.googleapis.com/css2?family=Grand+Hotel&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--blue:#0095f6;--border:#dbdbdb;--gray:#8e8e8e;--dark:#262626;--bg:#fafafa;--wh:#fff;--nav:56px}
+body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--dark);min-height:100vh}
+button{cursor:pointer;border:none;background:none;font-family:inherit}
+input{font-family:inherit}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+
+/* ── NAV ── */
+nav{
+  position:fixed;top:0;left:0;right:0;height:var(--nav);
+  background:var(--wh);border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:12px;
+  padding:0 16px;z-index:100;
+}
+.nav-back{
+  width:36px;height:36px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  transition:background .15s;flex-shrink:0;
+}
+.nav-back:hover{background:#f0f0f0}
+.nav-back svg{width:22px;height:22px;stroke:var(--dark);fill:none;stroke-width:2}
+.nav-title{font-size:18px;font-weight:800;flex:1}
+
+/* ── SEARCH BOX ── */
+.search-box{
+  padding:12px 16px;
+  position:sticky;top:var(--nav);background:var(--wh);
+  border-bottom:1px solid var(--border);z-index:90;
+}
+.input-wrap{
+  display:flex;align-items:center;gap:10px;
+  background:#efefef;border-radius:10px;
+  padding:10px 14px;transition:background .2s;
+}
+.input-wrap:focus-within{background:#e8e8e8}
+.input-wrap svg{flex-shrink:0;transition:opacity .2s}
+.input-wrap input{
+  flex:1;border:none;background:none;outline:none;
+  font-size:15px;color:var(--dark);
+}
+.input-wrap input::placeholder{color:var(--gray)}
+.clear-btn{
+  width:20px;height:20px;border-radius:50%;
+  background:#aaa;color:#fff;
+  display:none;align-items:center;justify-content:center;
+  font-size:12px;font-weight:700;flex-shrink:0;
+  cursor:pointer;transition:background .15s;
+}
+.clear-btn.show{display:flex}
+.clear-btn:hover{background:#888}
+
+/* ── CONTENT ── */
+.content{padding-top:calc(var(--nav));display:flex;flex-direction:column}
+.section-label{
+  padding:14px 16px 8px;
+  font-size:15px;font-weight:800;color:var(--dark);
+}
+
+/* ── USER ITEM ── */
+.user-item{
+  display:flex;align-items:center;gap:14px;
+  padding:10px 16px;cursor:pointer;
+  transition:background .15s;
+  animation:fadeUp .2s ease both;
+}
+.user-item:hover{background:#f5f5f5}
+.user-av{
+  width:52px;height:52px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:24px;flex-shrink:0;
+}
+.user-info{flex:1;min-width:0}
+.user-un{font-size:14px;font-weight:700;display:block;margin-bottom:2px}
+.user-name{font-size:13px;color:var(--gray);display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.user-meta{font-size:12px;color:var(--gray);margin-top:2px;display:block}
+.chevron{color:var(--gray)}
+.chevron svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2}
+
+/* ── STATES ── */
+.empty-state{
+  display:flex;flex-direction:column;align-items:center;
+  justify-content:center;gap:12px;
+  padding:60px 20px;animation:fadeIn .3s ease both;
+}
+.empty-icon{
+  width:64px;height:64px;border-radius:50%;
+  border:2px solid var(--gray);
+  display:flex;align-items:center;justify-content:center;
+}
+.empty-icon svg{width:28px;height:28px;stroke:var(--gray);fill:none;stroke-width:1.5}
+.empty-title{font-size:18px;font-weight:800;color:var(--dark)}
+.empty-sub{font-size:14px;color:var(--gray);text-align:center;line-height:1.5;max-width:240px}
+
+/* highlight matched text */
+.hl{color:var(--dark)}
+
+/* recent item remove btn */
+.remove-btn{
+  width:28px;height:28px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  color:var(--gray);transition:background .15s;flex-shrink:0;
+}
+.remove-btn:hover{background:#efefef}
+.remove-btn svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2.5}
+
+/* divider */
+.divider{height:1px;background:var(--border);margin:4px 0}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <button class="nav-back" onclick="history.back()" title="Back">
+    <svg viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+  </button>
+  <span class="nav-title">Search</span>
+</nav>
+
+<!-- CONTENT -->
+<div class="content">
+  <!-- SEARCH BOX -->
+  <div class="search-box">
+    <div class="input-wrap">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#8e8e8e" stroke-width="2" width="18" height="18">
+        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+      </svg>
+      <input
+        id="searchInput"
+        type="text"
+        placeholder="Search users…"
+        autocomplete="off"
+        oninput="onSearch(this.value)"
+        autofocus
+      >
+      <div class="clear-btn" id="clearBtn" onclick="clearSearch()">✕</div>
+    </div>
+  </div>
+
+  <!-- RESULTS AREA -->
+  <div id="resultsArea"></div>
+</div>
+
+<script>
+/* ══════════════════════════════════
+   USERS DATABASE
+══════════════════════════════════ */
+const usersDB = [
+  {un:'sophiaa',      name:'Sophia Rose',  av:'🌸', bg:'linear-gradient(135deg,#ffd6e7,#ffb3ba)', posts:47,  followers:12400, following:382},
+  {un:'jakewaves',    name:'Jake Miller',  av:'🏄', bg:'linear-gradient(135deg,#c3d5ff,#a8c8ff)', posts:31,  followers:8900,  following:210},
+  {un:'artbylu',      name:'Lu Chen',      av:'🎨', bg:'linear-gradient(135deg,#e8d5ff,#d0b0ff)', posts:88,  followers:21000, following:140},
+  {un:'green.living', name:'Eco Maya',     av:'🌿', bg:'linear-gradient(135deg,#d6ffd8,#b3f0b5)', posts:22,  followers:5400,  following:310},
+  {un:'lens.life',    name:'Lens Life',    av:'📸', bg:'linear-gradient(135deg,#ffecd2,#fcb69f)', posts:64,  followers:9800,  following:490},
+  {un:'foodienyc',    name:'NYC Foodie',   av:'🍕', bg:'linear-gradient(135deg,#a8edea,#fed6e3)', posts:120, followers:34000, following:890},
+  {un:'rufuspup',     name:'Rufus 🐾',     av:'🐶', bg:'linear-gradient(135deg,#fff3b3,#ffe0a8)', posts:14,  followers:2100,  following:88},
+  {un:'beatsbymika',  name:'Mika Sounds',  av:'🎵', bg:'linear-gradient(135deg,#fbc2eb,#a6c1ee)', posts:55,  followers:7200,  following:210},
+  {un:'john_doe',     name:'John Doe',     av:'👨', bg:'linear-gradient(135deg,#c3d5ff,#a8c8ff)', posts:18,  followers:940,   following:310},
+  {un:'john_dev',     name:'John Dev',     av:'🧑‍💻', bg:'linear-gradient(135deg,#d6ffd8,#b3f0b5)',posts:42, followers:3100,  following:180},
+  {un:'john123',      name:'John Smith',   av:'👦', bg:'linear-gradient(135deg,#ffd6e7,#ffb3ba)', posts:7,   followers:210,   following:98},
+  {un:'nightowl99',   name:'Night Owl',    av:'🌙', bg:'linear-gradient(135deg,#c3d5ff,#a8c8ff)', posts:33,  followers:1800,  following:400},
+  {un:'morningbrew',  name:'Coffee Daily', av:'☕', bg:'linear-gradient(135deg,#ffecd2,#fcb69f)', posts:29,  followers:6700,  following:320},
+  {un:'peakchaser',   name:'Peak Chaser',  av:'🏔️', bg:'linear-gradient(135deg,#d6ffd8,#b3f0b5)',posts:61,  followers:4800,  following:270},
+  {un:'butterfly.art',name:'Asha Patel',   av:'🦋', bg:'linear-gradient(135deg,#ffd6e7,#ffb3ba)', posts:35,  followers:3200,  following:190},
+];
+
+/* ── Recent searches (session only) ── */
+let recentSearches = JSON.parse(sessionStorage.getItem('ig_recent') || '[]');
+
+function saveRecent(un){
+  recentSearches = [un, ...recentSearches.filter(x=>x!==un)].slice(0,8);
+  sessionStorage.setItem('ig_recent', JSON.stringify(recentSearches));
+}
+function removeRecent(un){
+  recentSearches = recentSearches.filter(x=>x!==un);
+  sessionStorage.setItem('ig_recent', JSON.stringify(recentSearches));
+  const q = document.getElementById('searchInput').value.trim();
+  if(!q) renderRecent();
+}
+
+function fmt(n){return n>=1000?(n/1000).toFixed(1).replace(/\.0$/,'')+'k':n}
+
+/* ── Highlight matched text ── */
+function highlight(text, q){
+  if(!q) return text;
+  const idx = text.toLowerCase().indexOf(q.toLowerCase());
+  if(idx===-1) return text;
+  return text.slice(0,idx)
+    +`<b class="hl">${text.slice(idx,idx+q.length)}</b>`
+    +text.slice(idx+q.length);
+}
+
+/* ── Navigate to profile ── */
+function goProfile(un){
+  saveRecent(un);
+  window.location.href = `profile.html?user=${encodeURIComponent(un)}`;
+}
+
+/* ── Render recent ── */
+function renderRecent(){
+  const area = document.getElementById('resultsArea');
+  if(!recentSearches.length){
+    area.innerHTML=`
+      <div class="empty-state">
+        <div class="empty-icon">
+          <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        </div>
+        <div class="empty-title">Search Instagram</div>
+        <div class="empty-sub">Find friends, creators, and accounts you love.</div>
+      </div>`;
+    return;
+  }
+  const users = recentSearches.map(un=>usersDB.find(u=>u.un===un)).filter(Boolean);
+  area.innerHTML=`
+    <div class="section-label">Recent</div>
+    ${users.map(u=>`
+      <div class="user-item" onclick="goProfile('${u.un}')">
+        <div class="user-av" style="background:${u.bg}">${u.av}</div>
+        <div class="user-info">
+          <span class="user-un">${u.un}</span>
+          <span class="user-name">${u.name}</span>
+          <span class="user-meta">${fmt(u.followers)} followers</span>
+        </div>
+        <button class="remove-btn" onclick="event.stopPropagation();removeRecent('${u.un}')">
+          <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>`).join('')}`;
+}
+
+/* ── Render search results ── */
+function renderResults(q){
+  const area = document.getElementById('resultsArea');
+  const results = usersDB.filter(u=>
+    u.un.toLowerCase().includes(q.toLowerCase()) ||
+    u.name.toLowerCase().includes(q.toLowerCase())
+  );
+  if(!results.length){
+    area.innerHTML=`
+      <div class="empty-state">
+        <div class="empty-icon">
+          <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        </div>
+        <div class="empty-title">No results</div>
+        <div class="empty-sub">No accounts found for "<b>${q}</b>". Try a different name or username.</div>
+      </div>`;
+    return;
+  }
+  area.innerHTML = results.map((u,i)=>`
+    <div class="user-item" style="animation-delay:${i*0.04}s" onclick="goProfile('${u.un}')">
+      <div class="user-av" style="background:${u.bg}">${u.av}</div>
+      <div class="user-info">
+        <span class="user-un">${highlight(u.un,q)}</span>
+        <span class="user-name">${highlight(u.name,q)}</span>
+        <span class="user-meta">${fmt(u.followers)} followers</span>
+      </div>
+      <div class="chevron"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></div>
+    </div>`).join('');
+}
+
+/* ── Input handler ── */
+function onSearch(val){
+  const q = val.trim();
+  document.getElementById('clearBtn').classList.toggle('show', !!q);
+  if(!q){ renderRecent(); return; }
+  renderResults(q);
+}
+
+function clearSearch(){
+  document.getElementById('searchInput').value='';
+  document.getElementById('clearBtn').classList.remove('show');
+  document.getElementById('searchInput').focus();
+  renderRecent();
+}
+
+/* ── Init ── */
+renderRecent();
+</script>
+</body>
+</html>

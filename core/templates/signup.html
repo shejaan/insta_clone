@@ -1,0 +1,877 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Instagram • Sign Up</title>
+  <link href="https://fonts.googleapis.com/css2?family=Grand+Hotel&family=Nunito:wght@300;400;600;700&display=swap"
+    rel="stylesheet">
+  <style>
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0
+    }
+
+    :root {
+      --grad: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
+      --blue: #0095f6;
+      --blue2: #1877f2;
+      --border: #dbdbdb;
+      --gray: #8e8e8e;
+      --dark: #262626;
+      --bg: #fafafa;
+      --wh: #fff;
+    }
+
+    body {
+      font-family: 'Nunito', sans-serif;
+      background: var(--bg);
+      color: var(--dark);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column
+    }
+
+    a {
+      text-decoration: none;
+      color: inherit
+    }
+
+    button {
+      cursor: pointer;
+      border: none;
+      background: none;
+      font-family: inherit
+    }
+
+    main {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 32px 16px;
+    }
+
+    /* ── AUTH SECTION ── */
+    #auth {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      width: 350px;
+      max-width: 100%
+    }
+
+    /* ── PANEL ── */
+    .panel {
+      background: var(--wh);
+      border: 1px solid var(--border);
+      border-radius: 1px;
+      padding: 36px 40px 24px
+    }
+
+    /* ── LOGO ── */
+    .logo-text {
+      font-family: 'Grand Hotel', cursive;
+      font-size: 40px;
+      color: var(--dark);
+      text-align: center;
+      margin-bottom: 16px;
+      display: block;
+      letter-spacing: -0.5px;
+    }
+
+    /* ── TAGLINE ── */
+    .tagline {
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--gray);
+      text-align: center;
+      margin-bottom: 20px;
+      line-height: 1.4;
+    }
+
+    /* ── FB BUTTON ── */
+    .fb-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+      background: #385185;
+      color: #fff;
+      border-radius: 8px;
+      padding: 8px 16px;
+      font-size: 14px;
+      font-weight: 700;
+      transition: opacity .15s;
+      margin-bottom: 16px;
+    }
+
+    .fb-btn:hover {
+      opacity: .88
+    }
+
+    .fb-btn svg {
+      flex-shrink: 0
+    }
+
+    /* ── SEPARATOR ── */
+    .separator {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 16px
+    }
+
+    .separator span {
+      flex: 1;
+      height: 1px;
+      background: var(--border)
+    }
+
+    .or {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--gray);
+      letter-spacing: 1px;
+      flex-shrink: 0
+    }
+
+    /* ── FORM ── */
+    form {
+      display: flex;
+      flex-direction: column;
+      gap: 6px
+    }
+
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0)
+    }
+
+    .input-wrap {
+      position: relative;
+      width: 100%
+    }
+
+    input {
+      width: 100%;
+      padding: 9px 8px 7px;
+      background: #fafafa;
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      font-size: 12px;
+      font-family: 'Nunito', sans-serif;
+      color: var(--dark);
+      outline: none;
+      transition: border-color .2s;
+    }
+
+    input::placeholder {
+      color: #aaa;
+      font-size: 12px
+    }
+
+    input:focus {
+      border-color: #a8a8a8;
+      background: #fff
+    }
+
+    input.error {
+      border-color: #ed4956
+    }
+
+    input.success {
+      border-color: #3bce57
+    }
+
+    /* password toggle */
+    .pw-toggle {
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--dark);
+      cursor: pointer;
+      user-select: none;
+      transition: color .15s;
+    }
+
+    .pw-toggle:hover {
+      color: var(--gray)
+    }
+
+    /* field hint */
+    .field-hint {
+      font-size: 11px;
+      color: var(--gray);
+      margin-top: 1px;
+      margin-left: 2px;
+      display: none
+    }
+
+    .field-hint.show {
+      display: block
+    }
+
+    .field-hint.err {
+      color: #ed4956
+    }
+
+    .field-hint.ok {
+      color: #3bce57
+    }
+
+    /* ── SIGN UP BUTTON ── */
+    .signup-btn {
+      width: 100%;
+      padding: 7px 16px;
+      background: var(--blue);
+      color: #fff;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 700;
+      font-family: 'Nunito', sans-serif;
+      margin-top: 8px;
+      transition: background .15s, opacity .15s;
+    }
+
+    .signup-btn:hover {
+      background: var(--blue2)
+    }
+
+    .signup-btn:active {
+      opacity: .85
+    }
+
+    .signup-btn:disabled {
+      background: #b2dffc;
+      cursor: default
+    }
+
+    /* ── TERMS ── */
+    .terms-text {
+      font-size: 12px;
+      color: var(--gray);
+      text-align: center;
+      margin-top: 14px;
+      line-height: 1.6
+    }
+
+    .terms-text a {
+      color: var(--gray);
+      font-weight: 700
+    }
+
+    .terms-text a:hover {
+      text-decoration: underline
+    }
+
+    /* ── LOGIN PANEL ── */
+    .panel.login-link-panel {
+      padding: 20px 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+    }
+
+    .login-link-panel p {
+      font-size: 14px
+    }
+
+    .login-link-panel a {
+      color: var(--blue);
+      font-weight: 700;
+      font-size: 14px
+    }
+
+    .login-link-panel a:hover {
+      opacity: .7
+    }
+
+    /* ── APP DOWNLOAD ── */
+    .app-download {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+      margin-top: 6px
+    }
+
+    .app-download p {
+      font-size: 14px
+    }
+
+    .app-badges {
+      display: flex;
+      gap: 8px;
+      justify-content: center
+    }
+
+    .app-badge {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      border: 1px solid #c7c7c7;
+      border-radius: 6px;
+      padding: 5px 10px;
+      background: #fff;
+      color: var(--dark);
+      transition: border-color .15s, box-shadow .15s;
+    }
+
+    .app-badge:hover {
+      border-color: #888;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, .08)
+    }
+
+    .app-badge svg {
+      width: 20px;
+      height: 20px;
+      flex-shrink: 0
+    }
+
+    .badge-text {
+      display: flex;
+      flex-direction: column;
+      line-height: 1.2
+    }
+
+    .badge-text .small {
+      font-size: 9px;
+      font-weight: 400
+    }
+
+    .badge-text .big {
+      font-size: 13px;
+      font-weight: 700
+    }
+
+    /* ── FOOTER ── */
+    footer {
+      padding: 24px 16px 16px;
+      text-align: center
+    }
+
+    footer ul {
+      list-style: none;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 4px 16px;
+      margin-bottom: 14px
+    }
+
+    footer ul li a {
+      font-size: 11px;
+      color: var(--gray);
+      letter-spacing: .2px;
+      transition: color .15s
+    }
+
+    footer ul li a:hover {
+      color: var(--dark)
+    }
+
+    .copyright {
+      font-size: 11px;
+      color: var(--gray)
+    }
+
+    /* ── ALERT BANNER ── */
+    .alert {
+      padding: 10px 12px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 10px;
+      text-align: center;
+      line-height: 1.4;
+    }
+
+    .alert-error {
+      background: #ffeaea;
+      color: #c0392b;
+      border: 1px solid #f5c6cb
+    }
+
+    .alert-success {
+      background: #eafaf1;
+      color: #1a7a44;
+      border: 1px solid #b7e4c7
+    }
+
+    /* ── SUCCESS OVERLAY ── */
+    .success-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, .45);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 999;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .3s;
+    }
+
+    .success-overlay.show {
+      opacity: 1;
+      pointer-events: all
+    }
+
+    .success-box {
+      background: #fff;
+      border-radius: 12px;
+      padding: 40px 32px;
+      text-align: center;
+      max-width: 320px;
+      width: 90%;
+      transform: scale(.9);
+      transition: transform .3s;
+    }
+
+    .success-overlay.show .success-box {
+      transform: scale(1)
+    }
+
+    .success-icon {
+      font-size: 52px;
+      margin-bottom: 12px
+    }
+
+    .success-title {
+      font-size: 20px;
+      font-weight: 800;
+      margin-bottom: 8px
+    }
+
+    .success-sub {
+      font-size: 14px;
+      color: var(--gray);
+      margin-bottom: 20px;
+      line-height: 1.5
+    }
+
+    .success-cta {
+      background: var(--blue);
+      color: #fff;
+      font-size: 14px;
+      font-weight: 700;
+      padding: 10px 28px;
+      border-radius: 8px;
+      transition: background .15s;
+    }
+
+    .success-cta:hover {
+      background: var(--blue2)
+    }
+
+    /* ── ANIMATIONS ── */
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(16px)
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0)
+      }
+    }
+
+    @keyframes shake {
+
+      0%,
+      100% {
+        transform: translateX(0)
+      }
+
+      20% {
+        transform: translateX(-8px)
+      }
+
+      40% {
+        transform: translateX(8px)
+      }
+
+      60% {
+        transform: translateX(-5px)
+      }
+
+      80% {
+        transform: translateX(5px)
+      }
+    }
+
+    #auth {
+      animation: fadeInUp .45s ease both
+    }
+
+    /* ── RESPONSIVE ── */
+    @media(max-width:480px) {
+      .panel {
+        padding: 30px 20px 20px
+      }
+
+      .panel.login-link-panel {
+        padding: 16px 20px
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <main>
+    <section id="auth">
+
+      <!-- ══ SIGNUP PANEL ══ -->
+      <div class="panel">
+        <span class="logo-text">Instagram</span>
+        <p class="tagline">Sign up to see photos and videos from your friends.</p>
+
+        <!-- Facebook signup -->
+        <a href="#" class="fb-btn">
+          <svg viewBox="0 0 24 24" fill="#fff" width="18" height="18">
+            <path
+              d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
+          </svg>
+          Sign up with Facebook
+        </a>
+
+        <div class="separator"><span></span>
+          <div class="or">OR</div><span></span>
+        </div>
+
+        <!-- Signup Form -->
+        <form id="signupForm" method="POST" action="{% url 'register' %}">
+          {% csrf_token %}
+
+          <!-- Django backend error / success messages -->
+          {% if messages %}
+          {% for message in messages %}
+          <div class="alert {% if message.tags == 'error' %}alert-error{% else %}alert-success{% endif %}">
+            {{ message }}
+          </div>
+          {% endfor %}
+          {% endif %}
+
+          <!-- Mobile / Email -->
+          <label for="fMobile" class="sr-only">Mobile number or email</label>
+          <input id="fMobile" name="email" type="text" placeholder="Mobile number or email" autocomplete="email"
+            oninput="liveValidate(this,'mobile')" onblur="liveValidate(this,'mobile')" />
+          <span class="field-hint" id="hMobile"></span>
+
+          <!-- Full Name -->
+          <label for="fName" class="sr-only">Full name</label>
+          <input id="fName" name="fullname" type="text" placeholder="Full name" autocomplete="name"
+            oninput="liveValidate(this,'name')" onblur="liveValidate(this,'name')" />
+          <span class="field-hint" id="hName"></span>
+
+          <!-- Username -->
+          <label for="fUser" class="sr-only">Username</label>
+          <input id="fUser" name="username" type="text" placeholder="Username" autocomplete="username"
+            oninput="liveValidate(this,'username')" onblur="liveValidate(this,'username')" />
+          <span class="field-hint" id="hUser"></span>
+
+          <!-- Password -->
+          <div class="input-wrap">
+            <input id="fPass" name="password" type="password" placeholder="Password" autocomplete="new-password"
+              oninput="liveValidate(this,'password')" onblur="liveValidate(this,'password')" />
+            <span class="pw-toggle" onclick="togglePw()">Show</span>
+          </div>
+          <span class="field-hint" id="hPass"></span>
+
+          <button class="signup-btn" id="signupBtn" type="submit">Sign up</button>
+        </form>
+
+        <p class="terms-text">
+          By signing up, you agree to our <a href="#">Terms</a>,
+          <a href="#">Privacy Policy</a> and <a href="#">Cookies Policy</a>.
+        </p>
+      </div>
+
+      <!-- ══ ALREADY HAVE ACCOUNT ══ -->
+      <div class="panel login-link-panel">
+        <p>Have an account?&nbsp;</p>
+        <a href="{% url 'login' %}">Log in</a>
+      </div>
+
+      <!-- ══ APP DOWNLOAD ══ -->
+      <div class="app-download">
+        <p>Get the app.</p>
+        <div class="app-badges">
+          <a href="#" class="app-badge">
+            <svg viewBox="0 0 24 24" fill="currentColor">
+              <path
+                d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z" />
+            </svg>
+            <div class="badge-text"><span class="small">Download on the</span><span class="big">App Store</span></div>
+          </a>
+          <a href="#" class="app-badge">
+            <svg viewBox="0 0 24 24" fill="currentColor">
+              <path
+                d="M3.18 23.76c.33.19.71.24 1.07.14l12.1-12.1L13.06 8.5 3.18 23.76zm16.7-10.04l-3.38-1.95-3.11 3.11 3.11 3.11 3.4-1.96c.97-.56.97-1.75-.02-2.31zM3.02.62C2.68.83 2.5 1.2 2.5 1.65v20.68c0 .45.18.82.52 1.03l.11.06L14.27 12 3.13.56l-.11.06z" />
+            </svg>
+            <div class="badge-text"><span class="small">Get it on</span><span class="big">Google Play</span></div>
+          </a>
+        </div>
+      </div>
+
+    </section>
+  </main>
+
+  <!-- ══ SUCCESS OVERLAY ══ -->
+  <div class="success-overlay" id="successOverlay">
+    <div class="success-box">
+      <div class="success-icon">🎉</div>
+      <div class="success-title">Welcome to Instagram!</div>
+      <div class="success-sub" id="successMsg">Your account has been created successfully.</div>
+      <a href="{% url 'home' %}" class="success-cta">Go to Home</a>
+
+    </div>
+  </div>
+
+  <footer>
+    <ul>
+      <li><a href="#">About</a></li>
+      <li><a href="#">Help</a></li>
+      <li><a href="#">Press</a></li>
+      <li><a href="#">API</a></li>
+      <li><a href="#">Careers</a></li>
+      <li><a href="#">Privacy</a></li>
+      <li><a href="#">Terms</a></li>
+      <li><a href="#">Locations</a></li>
+      <li><a href="#">Top Accounts</a></li>
+      <li><a href="#">Hashtags</a></li>
+      <li><a href="#">Language</a></li>
+    </ul>
+    <p class="copyright">© 2024 Instagram from Meta</p>
+  </footer>
+
+    <script>
+    const CHECK_URL = '/check-availability/';
+
+    // ── Validation rules (format only) ──
+    const rules = {
+      mobile:   { validate: v => v.length >= 5,                err: 'Enter a valid mobile number or email.' },
+      name:     { validate: v => v.trim().length >= 2,         err: 'Enter your full name.' },
+      username: { validate: v => /^[a-z0-9._]{3,30}$/.test(v),err: 'Username must be 3–30 chars: letters, numbers, . or _' },
+      password: { validate: v => v.length >= 6,               err: 'Password must be at least 6 characters.' }
+    };
+
+    const fieldMap = {
+      mobile:   { input: 'fMobile', hint: 'hMobile' },
+      name:     { input: 'fName',   hint: 'hName'   },
+      username: { input: 'fUser',   hint: 'hUser'   },
+      password: { input: 'fPass',   hint: 'hPass'   },
+    };
+
+    const backendFieldMap = {
+      email:    'mobile',
+      fullname: 'name',
+      username: 'username',
+      password: 'password',
+    };
+
+    // Track real DB availability
+    const dbStatus = { username: null, email: null };
+
+    // ── Debounce ──
+    function debounce(fn, delay) {
+      let timer;
+      return function(...args) { clearTimeout(timer); timer = setTimeout(() => fn.apply(this, args), delay); };
+    }
+
+    // ── Set hint state ──
+    function setHint(hint, inp, state, msg) {
+      inp.classList.remove('error', 'success');
+      hint.style.color = '';
+      if (state === 'ok')       { inp.classList.add('success'); hint.className = 'field-hint show ok';  hint.textContent = msg; }
+      else if (state === 'err') { inp.classList.add('error');   hint.className = 'field-hint show err'; hint.textContent = msg; }
+      else if (state === 'checking') { hint.className = 'field-hint show'; hint.textContent = msg; hint.style.color = '#8e8e8e'; }
+      else                      { hint.className = 'field-hint'; hint.textContent = ''; }
+    }
+
+    // ── Format-only validator ──
+    function liveValidate(inputEl, field) {
+      if (field === 'username') {
+        inputEl.value = inputEl.value.replace(/[^a-z0-9._]/gi, '').toLowerCase();
+      }
+      const val  = inputEl.value.trim();
+      const rule = rules[field];
+      const hint = document.getElementById(fieldMap[field].hint);
+
+      if (!val) { setHint(hint, inputEl, 'reset'); return false; }
+
+      if (rule.validate(val)) {
+        if (field !== 'username' && field !== 'mobile') {
+          setHint(hint, inputEl, 'ok', 'Looks good!');
+        }
+        return true;
+      } else {
+        setHint(hint, inputEl, 'err', rule.err);
+        return false;
+      }
+    }
+
+    // ── Real-time DB username check ──
+    const checkUsername = debounce(function() {
+      const el   = document.getElementById('fUser');
+      const hint = document.getElementById('hUser');
+      const val  = el.value.trim();
+      if (!val || !rules.username.validate(val)) return;
+
+      dbStatus.username = null;
+      setHint(hint, el, 'checking', 'Checking username...');
+
+      fetch(CHECK_URL + '?type=username&value=' + encodeURIComponent(val))
+        .then(r => r.json())
+        .then(data => {
+          if (el.value.trim() !== val) return; // stale
+          if (data.available) {
+            dbStatus.username = true;
+            setHint(hint, el, 'ok', '@' + val + ' is available!');
+          } else {
+            dbStatus.username = false;
+            setHint(hint, el, 'err', 'Username @' + val + ' is already taken.');
+          }
+        })
+        .catch(() => setHint(hint, el, 'err', 'Could not check username.'));
+    }, 500);
+
+    // ── Real-time DB email check ──
+    const checkEmail = debounce(function() {
+      const el   = document.getElementById('fMobile');
+      const hint = document.getElementById('hMobile');
+      const val  = el.value.trim();
+      if (!val || !rules.mobile.validate(val)) return;
+
+      dbStatus.email = null;
+      setHint(hint, el, 'checking', 'Checking availability...');
+
+      fetch(CHECK_URL + '?type=email&value=' + encodeURIComponent(val))
+        .then(r => r.json())
+        .then(data => {
+          if (el.value.trim() !== val) return; // stale
+          if (data.available) {
+            dbStatus.email = true;
+            setHint(hint, el, 'ok', 'Looks good!');
+          } else {
+            dbStatus.email = false;
+            setHint(hint, el, 'err', 'An account with this email already exists.');
+          }
+        })
+        .catch(() => setHint(hint, el, 'err', 'Could not verify email.'));
+    }, 500);
+
+    // ── Wire up fields ──
+    document.getElementById('fMobile').addEventListener('input', function() {
+      dbStatus.email = null;
+      const ok = liveValidate(this, 'mobile');
+      if (ok) checkEmail();
+    });
+
+    document.getElementById('fName').addEventListener('input', function() {
+      liveValidate(this, 'name');
+    });
+
+    document.getElementById('fUser').addEventListener('input', function() {
+      dbStatus.username = null;
+      const ok = liveValidate(this, 'username');
+      if (ok) checkUsername();
+    });
+
+    document.getElementById('fPass').addEventListener('input', function() {
+      liveValidate(this, 'password');
+    });
+
+    // ── Password show/hide ──
+    function togglePw() {
+      const inp = document.getElementById('fPass');
+      const btn = document.querySelector('.pw-toggle');
+      if (inp.type === 'password') { inp.type = 'text';     btn.textContent = 'Hide'; }
+      else                         { inp.type = 'password'; btn.textContent = 'Show'; }
+    }
+
+    // ── Show server error inline ──
+    function showFormError(msg, fieldKey) {
+      const form = document.getElementById('signupForm');
+      const btn  = document.getElementById('signupBtn');
+      const old  = document.getElementById('ajax-error');
+      if (old) old.remove();
+
+      const banner = document.createElement('div');
+      banner.id = 'ajax-error';
+      banner.className = 'alert alert-error';
+      banner.textContent = msg;
+      form.querySelector('[name=csrfmiddlewaretoken]').insertAdjacentElement('afterend', banner);
+
+      if (fieldKey && backendFieldMap[fieldKey]) {
+        const fk   = backendFieldMap[fieldKey];
+        const inp  = document.getElementById(fieldMap[fk].input);
+        const hint = document.getElementById(fieldMap[fk].hint);
+        if (inp)  { inp.classList.remove('success'); inp.classList.add('error'); }
+        if (hint) { hint.className = 'field-hint show err'; hint.textContent = msg; hint.style.color = ''; }
+      }
+
+      form.style.animation = 'none';
+      void form.offsetWidth;
+      form.style.animation = 'shake .4s ease';
+      btn.disabled    = false;
+      btn.textContent = 'Sign up';
+    }
+
+    // ── AJAX submit ──
+    document.getElementById('signupForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const form   = this;
+      const btn    = document.getElementById('signupBtn');
+      const fields = ['mobile', 'name', 'username', 'password'];
+
+      let allValid = true;
+      fields.forEach(f => {
+        const inp = document.getElementById(fieldMap[f].input);
+        if (!liveValidate(inp, f)) allValid = false;
+      });
+
+      if (dbStatus.username === false) allValid = false;
+      if (dbStatus.email    === false) allValid = false;
+
+      if (!allValid) {
+        form.style.animation = 'none';
+        void form.offsetWidth;
+        form.style.animation = 'shake .4s ease';
+        return;
+      }
+
+      btn.disabled    = true;
+      btn.textContent = 'Signing up…';
+
+      fetch(form.action, {
+        method:  'POST',
+        headers: { 'X-Requested-With': 'XMLHttpRequest' },
+        body:    new FormData(form)
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) { window.location.href = data.redirect; }
+        else              { showFormError(data.error, data.field); }
+      })
+      .catch(() => showFormError('Something went wrong. Please try again.', null));
+    });
+  </script>
+</body>
+
+</html>
