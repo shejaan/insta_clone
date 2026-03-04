@@ -135,7 +135,6 @@ MEDIA_ROOT = BASE_DIR / 'media'
 
 # ── Cloudinary (production media storage) ──
 # Set CLOUDINARY_URL env var on Render to enable cloud storage.
-# Format: cloudinary://<api_key>:<api_secret>@<cloud_name>
 CLOUDINARY_URL = os.environ.get('CLOUDINARY_URL')
 
 if CLOUDINARY_URL:
@@ -151,19 +150,31 @@ if CLOUDINARY_URL:
         'API_SECRET': _secret,
     }
 
-    # Use Cloudinary for all uploaded media files
-    DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
-
-    # DO NOT override MEDIA_URL here —
-    # django-cloudinary-storage generates correct URLs automatically
-    # e.g.:  https://res.cloudinary.com/<cloud>/image/upload/posts/file.jpg
-
+    # Django 4.2+ requires STORAGES dict (DEFAULT_FILE_STORAGE is ignored in Django 6)
+    STORAGES = {
+        'default': {
+            'BACKEND': 'cloudinary_storage.storage.MediaCloudinaryStorage',
+        },
+        'staticfiles': {
+            'BACKEND': 'whitenoise.storage.CompressedManifestStaticFilesStorage',
+        },
+    }
+else:
+    # Local development — use filesystem + whitenoise for static
+    STORAGES = {
+        'default': {
+            'BACKEND': 'django.core.files.storage.FileSystemStorage',
+        },
+        'staticfiles': {
+            'BACKEND': 'whitenoise.storage.CompressedManifestStaticFilesStorage',
+        },
+    }
 
 LOGIN_URL = '/login/'
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/login/'
 
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+# STATICFILES_STORAGE moved into STORAGES dict above (Django 6.0 requirement)
 
 # ── Database ──
 # Use DATABASE_URL env var on Render (PostgreSQL), fall back to SQLite locally.
