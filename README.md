@@ -9,7 +9,7 @@ Users can create profiles, upload posts, follow other users, like and comment on
 
 You can view the live deployed project here:
 
-https://insta-clone-sdnb.onrender.com
+https://insta-clone-0u0p.onrender.com/
 
 ---
 
