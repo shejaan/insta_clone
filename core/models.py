@@ -2,178 +2,207 @@ from django.db import models
 from django.contrib.auth.models import User
 
 
-from django.db import models
-from django.contrib.auth.models import User
-
+# ─────────────────────────────────────────────
+#  PROFILE
+# ─────────────────────────────────────────────
 
 class Profile(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
-
-    bio = models.TextField(blank=True)
-
-    profile_image = models.ImageField(
-        upload_to='profiles/',
-        blank=True,
-        null=True
-    )
-
+    user            = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
+    bio             = models.TextField(blank=True)
+    website         = models.URLField(blank=True)
+    profile_image   = models.ImageField(upload_to='profiles/', blank=True, null=True)
     private_account = models.BooleanField(default=False)
 
     def __str__(self):
         return self.user.username
 
+    class Meta:
+        verbose_name = 'Profile'
+
+
+# ─────────────────────────────────────────────
+#  POST
+# ─────────────────────────────────────────────
 
 class Post(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-
-    image = models.ImageField(upload_to='posts/')
-
-    caption = models.TextField(blank=True)
-
-    location = models.CharField(max_length=255, blank=True)
-
-    saved_by = models.ManyToManyField(
-        User,
-        related_name="saved_posts",
-        blank=True
-    )
-
+    user       = models.ForeignKey(User, on_delete=models.CASCADE, related_name='posts')
+    image      = models.ImageField(upload_to='posts/')
+    caption    = models.TextField(blank=True)
+    location   = models.CharField(max_length=255, blank=True)
+    saved_by   = models.ManyToManyField(User, related_name='saved_posts', blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"{self.user.username} - {self.id}"
+        return f"{self.user.username} – {self.id}"
+
+    def like_count(self):
+        return self.likes.count()
+
+    def comment_count(self):
+        return self.comments.count()
+
+    class Meta:
+        ordering = ['-created_at']
+        indexes  = [
+            models.Index(fields=['user', '-created_at']),
+        ]
 
 
-class FollowRequest(models.Model):
-    sender = models.ForeignKey(
-        User,
-        related_name='sent_requests',
-        on_delete=models.CASCADE
-    )
-
-    receiver = models.ForeignKey(
-        User,
-        related_name='received_requests',
-        on_delete=models.CASCADE
-    )
-
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    def __str__(self):
-        return f"{self.sender} → {self.receiver}"
-
+# ─────────────────────────────────────────────
+#  FOLLOW
+# ─────────────────────────────────────────────
 
 class Follow(models.Model):
-    follower = models.ForeignKey(
-        User,
-        related_name='followers',
-        on_delete=models.CASCADE
-    )
-
-    following = models.ForeignKey(
-        User,
-        related_name='following',
-        on_delete=models.CASCADE
-    )
-
+    follower  = models.ForeignKey(User, related_name='following_set', on_delete=models.CASCADE)
+    following = models.ForeignKey(User, related_name='follower_set',  on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return f"{self.follower} follows {self.following}"
 
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['follower', 'following'], name='unique_follow'),
+        ]
+        indexes = [
+            models.Index(fields=['follower']),
+            models.Index(fields=['following']),
+        ]
+
+
+# ─────────────────────────────────────────────
+#  FOLLOW REQUEST
+# ─────────────────────────────────────────────
+
+class FollowRequest(models.Model):
+    sender    = models.ForeignKey(User, related_name='sent_requests',     on_delete=models.CASCADE)
+    receiver  = models.ForeignKey(User, related_name='received_requests', on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.sender} → {self.receiver}"
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['sender', 'receiver'], name='unique_follow_request'),
+        ]
+        indexes = [
+            models.Index(fields=['receiver']),
+        ]
+
+
+# ─────────────────────────────────────────────
+#  LIKE
+# ─────────────────────────────────────────────
 
 class Like(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-
-    post = models.ForeignKey(
-        Post,
-        on_delete=models.CASCADE
-    )
-
+    user       = models.ForeignKey(User, on_delete=models.CASCADE, related_name='likes')
+    post       = models.ForeignKey('Post', on_delete=models.CASCADE, related_name='likes')
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"{self.user} liked {self.post.id}"
+        return f"{self.user} liked post {self.post_id}"
 
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['user', 'post'], name='unique_like'),
+        ]
+        indexes = [
+            models.Index(fields=['post']),
+        ]
+
+
+# ─────────────────────────────────────────────
+#  COMMENT
+# ─────────────────────────────────────────────
 
 class Comment(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-
-    post = models.ForeignKey(
-        Post,
-        on_delete=models.CASCADE
-    )
-
-    text = models.TextField()
-
+    user       = models.ForeignKey(User, on_delete=models.CASCADE, related_name='comments')
+    post       = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='comments')
+    text       = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"{self.user} commented"
+        return f"{self.user} on post {self.post_id}"
 
+    class Meta:
+        ordering = ['created_at']
+        indexes  = [
+            models.Index(fields=['post']),
+        ]
+
+
+# ─────────────────────────────────────────────
+#  NOTIFICATION
+# ─────────────────────────────────────────────
 
 class Notification(models.Model):
 
     NOTIFICATION_TYPES = (
-        ("like", "Like"),
-        ("comment", "Comment"),
-        ("follow", "Follow"),
-        ("follow_request", "Follow Request"),
+        ('like',           'Like'),
+        ('comment',        'Comment'),
+        ('follow',         'Follow'),
+        ('follow_request', 'Follow Request'),
     )
 
-    sender = models.ForeignKey(
-        User,
-        related_name="sent_notifications",
-        on_delete=models.CASCADE
-    )
-
-    receiver = models.ForeignKey(
-        User,
-        related_name="notifications",
-        on_delete=models.CASCADE
-    )
-
-    post = models.ForeignKey(
-        Post,
-        on_delete=models.CASCADE,
-        null=True,
-        blank=True
-    )
-
-    notif_type = models.CharField(
-        max_length=20,
-        choices=NOTIFICATION_TYPES
-    )
-
-    is_read = models.BooleanField(default=False)
-
+    sender     = models.ForeignKey(User, related_name='sent_notifications', on_delete=models.CASCADE)
+    receiver   = models.ForeignKey(User, related_name='notifications',      on_delete=models.CASCADE)
+    post       = models.ForeignKey(Post, on_delete=models.CASCADE, null=True, blank=True, related_name='notifications')
+    notif_type = models.CharField(max_length=20, choices=NOTIFICATION_TYPES)
+    is_read    = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return f"{self.sender} → {self.receiver} ({self.notif_type})"
 
+    class Meta:
+        ordering = ['-created_at']
+        indexes  = [
+            models.Index(fields=['receiver', 'is_read']),
+            models.Index(fields=['receiver', '-created_at']),
+        ]
 
-class Message(models.Model):
-    sender = models.ForeignKey(
-        User,
-        related_name='sent_messages',
-        on_delete=models.CASCADE
-    )
 
-    receiver = models.ForeignKey(
-        User,
-        related_name='received_messages',
-        on_delete=models.CASCADE
-    )
+# ─────────────────────────────────────────────
+#  CONVERSATION  (groups messages between two users)
+# ─────────────────────────────────────────────
 
-    text = models.TextField()
+class Conversation(models.Model):
+    """
+    Represents a unique channel between exactly two users.
+    Messages belong to a Conversation, not directly to sender/receiver.
+    This makes it easy to extend to group chats later.
+    """
+    participants = models.ManyToManyField(User, related_name='conversations')
+    created_at   = models.DateTimeField(auto_now_add=True)
+    updated_at   = models.DateTimeField(auto_now=True)
 
-    is_read = models.BooleanField(default=False)
-
-    created_at = models.DateTimeField(auto_now_add=True)
+    def __str__(self):
+        names = ', '.join(u.username for u in self.participants.all())
+        return f"Conversation({names})"
 
     class Meta:
-        ordering = ['created_at']
+        ordering = ['-updated_at']
+
+
+# ─────────────────────────────────────────────
+#  MESSAGE
+# ─────────────────────────────────────────────
+
+class Message(models.Model):
+    conversation = models.ForeignKey(Conversation, on_delete=models.CASCADE, related_name='messages', null=True, blank=True)
+    sender       = models.ForeignKey(User, related_name='sent_messages',     on_delete=models.CASCADE)
+    receiver     = models.ForeignKey(User, related_name='received_messages', on_delete=models.CASCADE)
+    text         = models.TextField()
+    is_read      = models.BooleanField(default=False)
+    created_at   = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return f"{self.sender} → {self.receiver}: {self.text[:30]}"
+
+    class Meta:
+        ordering = ['created_at']
+        indexes  = [
+            models.Index(fields=['sender', 'receiver']),
+            models.Index(fields=['conversation', 'created_at']),
+        ]

@@ -1,0 +1,164 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Edit Profile – Instagram</title>
+  <link href="https://fonts.googleapis.com/css2?family=Grand+Hotel&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{--blue:#0095f6;--border:#dbdbdb;--gray:#8e8e8e;--dark:#262626;--bg:#fafafa;--wh:#fff;--nav:60px;--grad:linear-gradient(45deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888)}
+    body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--dark);min-height:100vh}
+    a{text-decoration:none;color:inherit}
+    nav{position:fixed;top:0;left:0;right:0;height:var(--nav);background:var(--wh);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 20px;z-index:200}
+    .logo{font-family:'Grand Hotel',cursive;font-size:28px;color:var(--dark)}
+    .wrap{max-width:700px;margin:0 auto;margin-top:calc(var(--nav)+40px);padding:0 16px 60px}
+    .card{background:var(--wh);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+    .card-head{padding:20px 24px;border-bottom:1px solid var(--border)}
+    .card-head h1{font-size:20px;font-weight:800}
+    .card-head p{color:var(--gray);font-size:13px;margin-top:4px}
+    .avatar-row{display:flex;align-items:center;gap:20px;padding:24px;border-bottom:1px solid var(--border)}
+    .avatar-wrap{width:72px;height:72px;border-radius:50%;overflow:hidden;background:linear-gradient(135deg,#ffd6e7,#c3d5ff);flex-shrink:0;position:relative}
+    .avatar-wrap img{width:100%;height:100%;object-fit:cover}
+    .avatar-placeholder{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:32px}
+    .avatar-info strong{display:block;font-size:14px;font-weight:700}
+    .avatar-info label{color:var(--blue);font-size:14px;font-weight:700;cursor:pointer}
+    .avatar-info label:hover{color:var(--dark)}
+    .avatar-info input[type=file]{display:none}
+    .fields{padding:24px;display:flex;flex-direction:column;gap:20px}
+    .field{display:flex;flex-direction:column;gap:6px}
+    .field label{font-size:14px;font-weight:700}
+    .field input,.field textarea,.field select{width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:14px;font-family:'Nunito',sans-serif;outline:none;transition:border-color .15s;background:#fff;color:var(--dark)}
+    .field input:focus,.field textarea:focus{border-color:#a8a8a8}
+    .field textarea{resize:vertical;min-height:80px}
+    .field small{color:var(--gray);font-size:12px}
+    .toggle-row{display:flex;align-items:center;justify-content:space-between;padding:4px 0}
+    .toggle-row span{font-size:14px}
+    .toggle-row small{display:block;color:var(--gray);font-size:12px}
+    .toggle{position:relative;width:44px;height:24px;flex-shrink:0}
+    .toggle input{opacity:0;width:0;height:0}
+    .slider{position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background:#dbdbdb;border-radius:34px;transition:.3s}
+    .slider:before{position:absolute;content:'';height:18px;width:18px;left:3px;bottom:3px;background:white;border-radius:50%;transition:.3s}
+    input:checked+.slider{background:var(--dark)}
+    input:checked+.slider:before{transform:translateX(20px)}
+    .actions{padding:20px 24px;border-top:1px solid var(--border);display:flex;gap:12px;justify-content:flex-end}
+    .btn-save{padding:9px 24px;background:var(--blue);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;font-family:'Nunito',sans-serif;transition:background .15s}
+    .btn-save:hover{background:#1877f2}
+    .btn-cancel{padding:9px 24px;background:var(--bg);color:var(--dark);border:1px solid var(--border);border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;font-family:'Nunito',sans-serif;text-decoration:none;display:inline-flex;align-items:center}
+    .btn-cancel:hover{background:#efefef}
+    .messages{margin-bottom:16px}
+    .msg{padding:10px 14px;border-radius:8px;font-size:14px;margin-bottom:8px}
+    .msg.success{background:#d4edda;color:#155724}
+    .msg.error{background:#f8d7da;color:#721c24}
+    @media(max-width:600px){.avatar-row{flex-direction:column;text-align:center}.actions{flex-direction:column}}
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a href="{% url 'home' %}" class="logo">Instagram</a>
+  <a href="{% url 'profile' request.user.username %}" style="font-size:14px;font-weight:700">Cancel</a>
+</nav>
+
+<div class="wrap">
+  <!-- Messages -->
+  {% if messages %}
+  <div class="messages">
+    {% for message in messages %}
+    <div class="msg {{ message.tags }}">{{ message }}</div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <div class="card">
+    <div class="card-head">
+      <h1>Edit Profile</h1>
+      <p>Update your profile information</p>
+    </div>
+
+    <form method="post" enctype="multipart/form-data">
+      {% csrf_token %}
+
+      <!-- Avatar -->
+      <div class="avatar-row">
+        <div class="avatar-wrap">
+          {% if profile.profile_image %}
+            <img src="{{ profile.profile_image.url }}" alt="Profile picture" id="avatarPreview">
+          {% else %}
+            <div class="avatar-placeholder" id="avatarPreviewPlaceholder">👤</div>
+            <img src="" alt="" id="avatarPreview" style="display:none">
+          {% endif %}
+        </div>
+        <div class="avatar-info">
+          <strong>{{ request.user.username }}</strong>
+          <label for="id_profile_image">Change profile photo</label>
+          <input type="file" name="profile_image" id="id_profile_image" accept="image/*" onchange="previewAvatar(this)">
+        </div>
+      </div>
+
+      <!-- Fields -->
+      <div class="fields">
+
+        <!-- Display name -->
+        <div class="field">
+          <label for="id_fullname">Name</label>
+          <input type="text" name="fullname" id="id_fullname" value="{{ request.user.first_name }}" placeholder="Your full name" maxlength="150">
+          <small>Help people discover your account by using the name you're known by.</small>
+        </div>
+
+        <!-- Bio -->
+        <div class="field">
+          <label for="id_bio">Bio</label>
+          <textarea name="bio" id="id_bio" maxlength="150" placeholder="Write a bio...">{{ profile.bio }}</textarea>
+          <small>Max 150 characters</small>
+        </div>
+
+        <!-- Website -->
+        <div class="field">
+          <label for="id_website">Website</label>
+          <input type="url" name="website" id="id_website" value="{{ profile.website }}" placeholder="https://yourwebsite.com">
+        </div>
+
+        <!-- Private account -->
+        <div class="field">
+          <div class="toggle-row">
+            <div>
+              <span>Private Account</span>
+              <small>When your account is private, only people you approve can see your photos.</small>
+            </div>
+            <label class="toggle">
+              <input type="checkbox" name="private_account" id="id_private_account" {% if profile.private_account %}checked{% endif %}>
+              <span class="slider"></span>
+            </label>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="actions">
+        <a href="{% url 'profile' request.user.username %}" class="btn-cancel">Cancel</a>
+        <button type="submit" class="btn-save">Save Changes</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  function previewAvatar(input) {
+    if (input.files && input.files[0]) {
+      const reader = new FileReader();
+      reader.onload = e => {
+        const preview = document.getElementById('avatarPreview');
+        const placeholder = document.getElementById('avatarPreviewPlaceholder');
+        preview.src = e.target.result;
+        preview.style.display = 'block';
+        if (placeholder) placeholder.style.display = 'none';
+      };
+      reader.readAsDataURL(input.files[0]);
+    }
+  }
+</script>
+</body>
+</html>
