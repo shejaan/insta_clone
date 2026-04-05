@@ -1,166 +1,170 @@
-# Deploying to Render — Step-by-Step Guide
+# Render Deployment Guide — Instagram Clone
+
+Complete step-by-step guide to deploy this Django app on Render with PostgreSQL and Cloudinary.
+
+---
 
 ## Prerequisites
 
-- A [Render](https://render.com) account (free tier works)
-- A [Cloudinary](https://cloudinary.com) account (free tier — for media file storage)
-- Your project pushed to a **GitHub** or **GitLab** repository
+- [Render account](https://render.com)
+- [Cloudinary account](https://cloudinary.com) (free tier is fine)
+- Your code pushed to GitHub
 
 ---
 
-## 1. Environment Variables
+## Step 1: Create a PostgreSQL Database on Render
 
-On Render → your Web Service → **Environment** tab, add:
-
-| Key | Value | Description |
-|-----|-------|-------------|
-| `SECRET_KEY` | `your-very-long-random-secret-key` | Generate with `python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"` |
-| `DEBUG` | `False` | Always `False` in production |
-| `ALLOWED_HOSTS` | `yourapp.onrender.com` | Comma-separated if you have a custom domain |
-| `DATABASE_URL` | *(set automatically by Render PostgreSQL add-on)* | See Step 3 |
-| `CLOUDINARY_URL` | `cloudinary://api_key:api_secret@cloud_name` | Get from Cloudinary dashboard |
-
-> **Never** put real secrets in `.env` and commit them to Git. Use Render's env panel only.
+1. Go to **Render Dashboard → New → PostgreSQL**
+2. Choose a name (e.g., `instaclone-db`) and region
+3. Click **Create Database**
+4. Copy the **Internal Database URL** — you'll need it as `DATABASE_URL`
 
 ---
 
-## 2. Verify `build.sh`
+## Step 2: Get Your Cloudinary URL
 
-Your `build.sh` at project root should look like this:
+1. Log in to [Cloudinary Dashboard](https://console.cloudinary.com)
+2. Go to **Dashboard → API Keys**
+3. Copy the **API Environment variable** — it looks like:
+   ```
+   cloudinary://API_KEY:API_SECRET@CLOUD_NAME
+   ```
+4. This is your `CLOUDINARY_URL` value
+
+---
+
+## Step 3: Create a Web Service on Render
+
+1. Go to **Render Dashboard → New → Web Service**
+2. Connect your GitHub repository
+3. Set the following:
+
+   | Field | Value |
+   |---|---|
+   | **Runtime** | Python 3 |
+   | **Build Command** | `./build.sh` |
+   | **Start Command** | `gunicorn config.wsgi:application` |
+
+---
+
+## Step 4: Set Environment Variables
+
+In your Render Web Service → **Environment** tab, add:
+
+| Variable | Value | Notes |
+|---|---|---|
+| `SECRET_KEY` | Random 50-char string | Generate with `python -c "import secrets; print(secrets.token_urlsafe(50))"` |
+| `DEBUG` | `False` | Must be `False` in production |
+| `ALLOWED_HOSTS` | `yourapp.onrender.com` | Your Render domain (no `https://`) |
+| `DATABASE_URL` | From Render PostgreSQL dashboard | Use the **Internal** URL |
+| `CLOUDINARY_URL` | `cloudinary://key:secret@cloud_name` | From Cloudinary dashboard |
+| `DJANGO_SUPERUSER_USERNAME` | `admin` | Used to auto-create admin account |
+| `DJANGO_SUPERUSER_EMAIL` | `admin@example.com` | Admin email |
+| `DJANGO_SUPERUSER_PASSWORD` | Strong password | Admin login password |
+
+> **Important**: `ALLOWED_HOSTS` must be set or the app will raise `ImproperlyConfigured` and fail to start.
+
+> **Important**: `CLOUDINARY_URL` must be set or media uploads will be lost on every redeploy (Render uses an ephemeral filesystem).
+
+---
+
+## Step 5: Deploy
+
+1. Click **Deploy** (or push to GitHub to trigger auto-deploy)
+2. Watch the build logs — you should see:
+   ```
+   ==> Installing Python dependencies...
+   ==> Collecting static files...
+   ==> Running database migrations...
+   ==> Creating superuser if not present...
+   Superuser "admin" created successfully.
+   ==> Build complete!
+   ```
+
+---
+
+## Step 6: Access the Admin Panel
+
+1. Go to: `https://yourapp.onrender.com/admin/`
+2. Log in with the credentials you set in `DJANGO_SUPERUSER_USERNAME` / `DJANGO_SUPERUSER_PASSWORD`
+3. Admin CSS/JS loads from WhiteNoise (static files collected at build time) ✅
+
+### If Admin CSS is Broken (Troubleshooting)
+
+This happens if `collectstatic` failed during build. Check:
+
+1. Build logs for any errors mentioning `collectstatic`
+2. Ensure `CLOUDINARY_URL` is set correctly (malformed URL causes import errors)
+3. Re-deploy to re-run `collectstatic --clear`
+
+---
+
+## Step 7: Adding a Custom Domain (Optional)
+
+1. In Render → Web Service → **Settings → Custom Domains**
+2. Add your domain (e.g., `www.mysite.com`)
+3. Update `ALLOWED_HOSTS` to include both:
+   ```
+   yourapp.onrender.com,www.mysite.com
+   ```
+4. Update `CSRF_TRUSTED_ORIGINS` is auto-generated from `ALLOWED_HOSTS` in settings ✅
+
+---
+
+## Environment Variables Reference
+
+| Variable | Required | Description |
+|---|---|---|
+| `SECRET_KEY` | ✅ | Django secret key. Use a 50+ char random string. Never use the default. |
+| `DEBUG` | ✅ | Set to `False` in production |
+| `ALLOWED_HOSTS` | ✅ | Comma-separated host names. App raises `ImproperlyConfigured` if empty in production. |
+| `DATABASE_URL` | ✅ | PostgreSQL connection string from Render |
+| `CLOUDINARY_URL` | ✅ | Cloudinary API URL. Without this, media files are lost on redeploy. |
+| `DJANGO_SUPERUSER_USERNAME` | Recommended | Auto-creates admin on first deploy |
+| `DJANGO_SUPERUSER_EMAIL` | Recommended | Admin email |
+| `DJANGO_SUPERUSER_PASSWORD` | Recommended | Admin password |
+
+---
+
+## Useful Commands (Render Shell)
+
+Access via Render Dashboard → Web Service → **Shell** tab:
 
 ```bash
-#!/usr/bin/env bash
-set -o errexit
-
-pip install -r requirements.txt
-python manage.py collectstatic --no-input
-python manage.py migrate
-```
-
-Make it executable before committing:
-```powershell
-# On Windows (Git Bash):
-chmod +x build.sh
-git add build.sh
-git commit -m "Make build.sh executable"
-```
-
----
-
-## 3. PostgreSQL Database on Render
-
-1. In Render dashboard → **New** → **PostgreSQL**
-2. Choose free tier, pick a region
-3. After it creates, copy the **Internal Database URL**
-4. Add it as `DATABASE_URL` env var in your Web Service
-
-> Render automatically injects `DATABASE_URL` if you link the database to the Web Service from the service settings.
-
----
-
-## 4. Web Service Configuration
-
-| Field | Value |
-|-------|-------|
-| **Build Command** | `./build.sh` |
-| **Start Command** | `gunicorn config.wsgi:application --bind 0.0.0.0:$PORT --workers 2 --timeout 120` |
-| **Environment** | `Python 3` |
-| **Instance Type** | Free (or Starter for better performance) |
-| **Root Directory** | *(leave empty)* |
-
----
-
-## 5. `requirements.txt` — Required Packages
-
-Make sure these are included:
-
-```
-django>=4.2
-gunicorn
-whitenoise[brotli]
-dj-database-url
-psycopg2-binary
-python-dotenv
-cloudinary
-django-cloudinary-storage
-Pillow
-```
-
-Update if needed:
-```powershell
-pip freeze > requirements.txt
-```
-
----
-
-## 6. Deployment Flow
-
-```
-Git Push → Render auto-detects → Runs build.sh → Starts Gunicorn
-```
-
-1. Push your code to GitHub
-2. On Render, connect the repo → Deploy
-3. Watch the logs for errors
-4. Visit your `.onrender.com` URL
-
----
-
-## 7. Common Issues & Fixes
-
-### `DisallowedHost` error
-→ Add your Render URL to `ALLOWED_HOSTS` env var.
-```
-ALLOWED_HOSTS=myapp.onrender.com
-```
-
-### Static files 404 (CSS/JS not loading)
-→ `collectstatic` must run in `build.sh`. WhiteNoise serves static files automatically.
-
-### Media files 404 (uploaded images missing)
-→ Set `CLOUDINARY_URL` env var. Render's filesystem is ephemeral — all uploads are lost on redeploy without Cloudinary.
-
-### Migration errors on deploy
-→ **Always** include `python manage.py migrate` in `build.sh`. Render runs this on every deploy.
-
-### `CSRF verification failed` on POST requests
-→ Make sure `CSRF_TRUSTED_ORIGINS` in settings.py includes your Render domain. This is handled automatically since `settings.py` reads `ALLOWED_HOSTS` to build it.
-
-### `psycopg2` not found
-→ Add `psycopg2-binary` to `requirements.txt`.
-
-### `502 Bad Gateway`
-→ Check gunicorn worker count. Under free tier, use `--workers 1`.
-
----
-
-## 8. Cloudinary Setup
-
-1. Log in to [cloudinary.com](https://cloudinary.com)
-2. Dashboard → copy your **API Environment variable**: `cloudinary://...`
-3. Paste it as the `CLOUDINARY_URL` env var on Render
-4. All new uploads will go directly to Cloudinary
-
-> **Existing local uploads in `/media/`** will NOT be migrated automatically.
-> You'll need to re-upload them or use the Cloudinary bulk upload tool.
-
----
-
-## 9. Post-Deployment Checklist
-
-- [ ] Visit your `.onrender.com` URL — site loads ✅
-- [ ] Register a new user — profile auto-created ✅  
-- [ ] Upload a post — image serves from Cloudinary URL ✅  
-- [ ] Check Django admin at `/admin/` ✅
-- [ ] Run `python manage.py createsuperuser` via Render Shell for admin access
-
----
-
-## 10. Render Shell (for one-off commands)
-
-In Render → your Web Service → **Shell** tab:
-```bash
+# Create superuser manually
 python manage.py createsuperuser
+
+# Check deployment configuration
+python manage.py check --deploy
+
+# Apply any pending migrations
 python manage.py migrate
-python manage.py collectstatic --no-input
+
+# View all registered URL patterns
+python manage.py show_urls  # (requires django-extensions)
 ```
+
+---
+
+## Media File Persistence
+
+Media files (profile pictures, post images) are stored on **Cloudinary** in production.
+
+- Files are **never stored on Render's filesystem** in production ✅
+- Cloudinary free tier gives 25GB storage and 25GB monthly bandwidth
+- Uploaded files survive all redeployments ✅
+
+**If `CLOUDINARY_URL` is missing**: The app will log a `CRITICAL` warning and fall back to local storage — files will be lost on the next redeploy.
+
+---
+
+## Checklist Before Going Live
+
+- [ ] `DEBUG=False` set in environment
+- [ ] `SECRET_KEY` is random and secret (not the Django default)
+- [ ] `ALLOWED_HOSTS` set to your Render domain
+- [ ] `DATABASE_URL` connected to Render PostgreSQL
+- [ ] `CLOUDINARY_URL` set from your Cloudinary dashboard
+- [ ] Superuser created (either via env vars or `createsuperuser`)
+- [ ] Admin panel accessible at `/admin/`
+- [ ] Test: upload a post image → redeploy → image still visible ✅

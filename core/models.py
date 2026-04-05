@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
+from django.db.models import Q
 
 
 # ─────────────────────────────────────────────
@@ -17,7 +18,8 @@ class Profile(models.Model):
         return self.user.username
 
     class Meta:
-        verbose_name = 'Profile'
+        verbose_name        = 'Profile'
+        verbose_name_plural = 'Profiles'
 
 
 # ─────────────────────────────────────────────
@@ -43,8 +45,11 @@ class Post(models.Model):
 
     class Meta:
         ordering = ['-created_at']
-        indexes  = [
+        verbose_name_plural = 'Posts'
+        indexes = [
             models.Index(fields=['user', '-created_at']),
+            # Standalone index for explore/trending queries that order by created_at globally
+            models.Index(fields=['-created_at'], name='post_created_at_idx'),
         ]
 
 
@@ -53,14 +58,15 @@ class Post(models.Model):
 # ─────────────────────────────────────────────
 
 class Follow(models.Model):
-    follower  = models.ForeignKey(User, related_name='following_set', on_delete=models.CASCADE)
-    following = models.ForeignKey(User, related_name='follower_set',  on_delete=models.CASCADE)
+    follower   = models.ForeignKey(User, related_name='following_set', on_delete=models.CASCADE)
+    following  = models.ForeignKey(User, related_name='follower_set',  on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return f"{self.follower} follows {self.following}"
 
     class Meta:
+        verbose_name_plural = 'Follows'
         constraints = [
             models.UniqueConstraint(fields=['follower', 'following'], name='unique_follow'),
         ]
@@ -83,11 +89,13 @@ class FollowRequest(models.Model):
         return f"{self.sender} → {self.receiver}"
 
     class Meta:
+        verbose_name_plural = 'Follow Requests'
         constraints = [
             models.UniqueConstraint(fields=['sender', 'receiver'], name='unique_follow_request'),
         ]
         indexes = [
             models.Index(fields=['receiver']),
+            models.Index(fields=['sender'], name='followreq_sender_named_idx'),
         ]
 
 
@@ -104,11 +112,14 @@ class Like(models.Model):
         return f"{self.user} liked post {self.post_id}"
 
     class Meta:
+        verbose_name_plural = 'Likes'
         constraints = [
             models.UniqueConstraint(fields=['user', 'post'], name='unique_like'),
         ]
         indexes = [
-            models.Index(fields=['post']),
+            # Compound index covers both the uniqueness check and per-post like counts
+            models.Index(fields=['post', 'user'], name='like_post_user_idx'),
+            models.Index(fields=['user'], name='like_user_idx'),
         ]
 
 
@@ -127,8 +138,9 @@ class Comment(models.Model):
 
     class Meta:
         ordering = ['created_at']
-        indexes  = [
-            models.Index(fields=['post']),
+        verbose_name_plural = 'Comments'
+        indexes = [
+            models.Index(fields=['post', 'created_at'], name='comment_post_time_idx'),
         ]
 
 
@@ -157,7 +169,8 @@ class Notification(models.Model):
 
     class Meta:
         ordering = ['-created_at']
-        indexes  = [
+        verbose_name_plural = 'Notifications'
+        indexes = [
             models.Index(fields=['receiver', 'is_read']),
             models.Index(fields=['receiver', '-created_at']),
         ]
@@ -171,7 +184,7 @@ class Conversation(models.Model):
     """
     Represents a unique channel between exactly two users.
     Messages belong to a Conversation, not directly to sender/receiver.
-    This makes it easy to extend to group chats later.
+    Easily extendable to group chats later.
     """
     participants = models.ManyToManyField(User, related_name='conversations')
     created_at   = models.DateTimeField(auto_now_add=True)
@@ -181,8 +194,32 @@ class Conversation(models.Model):
         names = ', '.join(u.username for u in self.participants.all())
         return f"Conversation({names})"
 
+    @classmethod
+    def get_or_create_for(cls, user_a, user_b):
+        """
+        Return the existing Conversation between user_a and user_b,
+        or create a new one.  Always returns (conversation, created).
+        """
+        # Find conversations where BOTH users are participants
+        conv = (
+            cls.objects
+            .filter(participants=user_a)
+            .filter(participants=user_b)
+            .first()
+        )
+        if conv:
+            return conv, False
+        conv = cls.objects.create()
+        conv.participants.set([user_a, user_b])
+        return conv, True
+
     class Meta:
         ordering = ['-updated_at']
+        verbose_name_plural = 'Conversations'
+        indexes = [
+            # Speeds up inbox sort (ordering = ['-updated_at'])
+            models.Index(fields=['-updated_at'], name='conversation_updated_idx'),
+        ]
 
 
 # ─────────────────────────────────────────────
@@ -190,19 +227,25 @@ class Conversation(models.Model):
 # ─────────────────────────────────────────────
 
 class Message(models.Model):
-    conversation = models.ForeignKey(Conversation, on_delete=models.CASCADE, related_name='messages', null=True, blank=True)
-    sender       = models.ForeignKey(User, related_name='sent_messages',     on_delete=models.CASCADE)
-    receiver     = models.ForeignKey(User, related_name='received_messages', on_delete=models.CASCADE)
-    text         = models.TextField()
-    is_read      = models.BooleanField(default=False)
-    created_at   = models.DateTimeField(auto_now_add=True)
+    conversation = models.ForeignKey(
+        Conversation, on_delete=models.CASCADE,
+        related_name='messages',
+        # Non-nullable: migration 0005 backfilled all orphan messages
+    )
+    sender   = models.ForeignKey(User, related_name='sent_messages',     on_delete=models.CASCADE)
+    receiver = models.ForeignKey(User, related_name='received_messages', on_delete=models.CASCADE)
+    text     = models.TextField()
+    is_read  = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return f"{self.sender} → {self.receiver}: {self.text[:30]}"
 
     class Meta:
         ordering = ['created_at']
-        indexes  = [
-            models.Index(fields=['sender', 'receiver']),
-            models.Index(fields=['conversation', 'created_at']),
+        verbose_name_plural = 'Messages'
+        indexes = [
+            models.Index(fields=['conversation', 'created_at'], name='message_conv_time_idx'),
+            models.Index(fields=['sender', 'receiver'],         name='message_sender_receiver_idx'),
         ]
+

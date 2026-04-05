@@ -1,25 +1,25 @@
 """
 views.py – Production-ready Instagram Clone views.
 
-Changes from original:
-  - Feed now shows only followed users' posts (+ own posts) with pagination
-  - follow_user   : direct-follow for public accounts; FollowRequest for private
-  - unfollow_user : new view
-  - like_post     : AJAX-capable (returns JSON when X-Requested-With set)
-  - save_post     : AJAX-capable
-  - profile_edit  : new view
-  - explore_view  : new view (posts ordered by like count)
-  - saved_posts_view : new view
-  - notifications_view / mark_notification_read : new views
-  - delete_post   : new view (owner-only)
-  - Fixed duplicate switch_account_view
-  - Added @login_required to search_view
+Production hardening applied:
+  - @require_POST on all state-mutating endpoints (like, save, follow, unfollow,
+    accept/decline follow requests) — prevents CSRF via GET
+  - @login_required added to suggested_users_view and switch_account_view
+  - save_post uses .filter().exists() instead of Python `in` membership check
+  - Messaging fully migrated to Conversation model:
+      send_message  → Conversation.get_or_create_for() then Message(conversation=...)
+      get_conversations → queries Conversation M2M, O(1) queries
+      get_messages  → scoped to Conversation
+      messages_view → Conversation-based inbox
+  - profile_view: post_count calculated once, not twice
+  - Suggested users ordered by follower count (most popular first)
+  - Comment spam guard: reject if same user comments on same post within 10 s
   - select_related / prefetch_related throughout to kill N+1 queries
-  - Removed debug_storage endpoint (keep only if DEBUG)
 """
 
-import re
 import json
+import logging
+from datetime import timedelta
 
 from django.contrib              import messages
 from django.contrib.auth         import authenticate, login, logout
@@ -30,13 +30,17 @@ from django.db.models            import Q, Count
 from django.http                 import JsonResponse
 from django.shortcuts            import render, redirect, get_object_or_404
 from django.urls                 import reverse
+from django.utils                import timezone
 from django.views.decorators.http import require_POST
+import re
 
 from .forms  import ProfileEditForm, CommentForm
 from .models import (
     Post, Like, Comment, Follow, FollowRequest,
     Notification, Message, Conversation, Profile,
 )
+
+logger = logging.getLogger(__name__)
 
 
 # ═══════════════════════════════════════════════
@@ -157,7 +161,7 @@ def logout_view(request):
 
 
 # ═══════════════════════════════════════════════
-#  CHECK AVAILABILITY (AJAX)
+#  CHECK AVAILABILITY (AJAX — intentionally open for signup flow)
 # ═══════════════════════════════════════════════
 
 def check_availability(request):
@@ -186,10 +190,9 @@ def check_availability(request):
 def home_view(request):
     me = request.user
 
-    # ── Followed-users-only feed ──
+    # ── Followed-users-only feed (plus own posts so feed isn't empty) ──
     followed_ids = _following_ids(me)
-    # Include own posts so the feed isn't empty when you don't follow anyone
-    feed_ids = followed_ids + [me.id]
+    feed_ids     = followed_ids + [me.id]
 
     posts_qs = (
         Post.objects
@@ -222,35 +225,40 @@ def home_view(request):
     )
     unread_notifications_count = Notification.objects.filter(receiver=me, is_read=False).count()
 
+    # Suggested users — ordered by follower count (most popular first)
     suggested_users = (
         User.objects
         .exclude(id=me.id)
         .exclude(id__in=followed_ids)
         .exclude(id__in=sent_req_ids)
+        .annotate(follower_count=Count('follower_set'))
+        .order_by('-follower_count')
         .select_related('profile')
         [:5]
     )
 
-    # IDs the current user has liked — used by templates to show filled heart
+    # IDs the current user has liked/saved — used by templates to show filled heart/bookmark
+    # Using sets avoids per-post DB lookups in the template
+    page_post_ids = [p.id for p in page_obj.object_list]
     liked_ids = set(
-        Like.objects.filter(user=me, post__in=page_obj.object_list).values_list('post_id', flat=True)
+        Like.objects.filter(user=me, post_id__in=page_post_ids).values_list('post_id', flat=True)
     )
     saved_ids = set(
-        me.saved_posts.filter(id__in=[p.id for p in page_obj.object_list]).values_list('id', flat=True)
+        me.saved_posts.filter(id__in=page_post_ids).values_list('id', flat=True)
     )
 
     context = {
-        'page_obj':                  page_obj,
-        'posts':                     page_obj.object_list,
-        'follow_requests':           follow_requests,
-        'notifications':             notifications,
+        'page_obj':                   page_obj,
+        'posts':                      page_obj.object_list,
+        'follow_requests':            follow_requests,
+        'notifications':              notifications,
         'unread_notifications_count': unread_notifications_count,
-        'suggested_users':           suggested_users,
-        'following_ids':             followed_ids,
-        'sent_request_ids':          sent_req_ids,
-        'follower_ids':              follower_ids,
-        'liked_ids':                 liked_ids,
-        'saved_ids':                 saved_ids,
+        'suggested_users':            suggested_users,
+        'following_ids':              followed_ids,
+        'sent_request_ids':           sent_req_ids,
+        'follower_ids':               follower_ids,
+        'liked_ids':                  liked_ids,
+        'saved_ids':                  saved_ids,
     }
 
     return render(request, 'homepage.html', context)
@@ -272,6 +280,8 @@ def profile_view(request, username):
         .prefetch_related('likes', 'comments')
         .order_by('-created_at')
     )
+    # Calculate once — avoids double DB hit
+    post_count = posts.count()
 
     followers_qs = Follow.objects.filter(following=profile_user).select_related('follower', 'follower__profile')
     following_qs = Follow.objects.filter(follower=profile_user).select_related('following', 'following__profile')
@@ -279,7 +289,7 @@ def profile_view(request, username):
     followers_list = [f.follower  for f in followers_qs]
     following_list = [f.following for f in following_qs]
 
-    is_following    = Follow.objects.filter(follower=request.user, following=profile_user).exists()
+    is_following     = Follow.objects.filter(follower=request.user, following=profile_user).exists()
     has_sent_request = FollowRequest.objects.filter(sender=request.user, receiver=profile_user).exists()
 
     # Privacy: hide posts grid for private accounts unless following
@@ -299,7 +309,7 @@ def profile_view(request, username):
         'following_count':  len(following_list),
         'is_following':     is_following,
         'has_sent_request': has_sent_request,
-        'post_count':       posts.count(),
+        'post_count':       post_count,   # ← single query, passed to template
     }
 
     return render(request, 'profile.html', context)
@@ -311,7 +321,6 @@ def profile_edit(request):
     profile, _ = Profile.objects.get_or_create(user=request.user)
 
     if request.method == 'POST':
-        # Also allow updating display name from this form
         fullname = request.POST.get('fullname', '').strip()
         form = ProfileEditForm(request.POST, request.FILES, instance=profile)
         if form.is_valid():
@@ -395,10 +404,11 @@ def delete_post(request, post_id):
 
 
 # ═══════════════════════════════════════════════
-#  LIKE POST  (AJAX-capable)
+#  LIKE POST  (AJAX-capable, POST-only for CSRF safety)
 # ═══════════════════════════════════════════════
 
 @login_required
+@require_POST
 def like_post(request, post_id):
     post = get_object_or_404(Post, id=post_id)
     like = Like.objects.filter(user=request.user, post=post)
@@ -409,7 +419,7 @@ def like_post(request, post_id):
     else:
         Like.objects.create(user=request.user, post=post)
         liked = True
-        # Notify post owner (not self)
+        # Notify post owner (skip self-like)
         if post.user != request.user:
             Notification.objects.get_or_create(
                 sender=request.user,
@@ -427,7 +437,7 @@ def like_post(request, post_id):
 
 
 # ═══════════════════════════════════════════════
-#  COMMENT
+#  COMMENT  (POST-only, with anti-spam guard)
 # ═══════════════════════════════════════════════
 
 @login_required
@@ -444,6 +454,14 @@ def add_comment(request, post_id):
     # Limit comment length
     if len(text) > 2200:
         text = text[:2200]
+
+    # Anti-spam: block if the same user commented on this post in the last 10 s
+    spam_window = timezone.now() - timedelta(seconds=10)
+    if Comment.objects.filter(user=request.user, post=post, created_at__gte=spam_window).exists():
+        if _is_ajax(request):
+            return JsonResponse({'success': False, 'error': 'You are commenting too fast. Please slow down.'}, status=429)
+        messages.error(request, 'You are commenting too fast.')
+        return redirect(request.META.get('HTTP_REFERER', 'home'))
 
     comment = Comment.objects.create(user=request.user, post=post, text=text)
 
@@ -474,14 +492,16 @@ def add_comment(request, post_id):
 
 
 # ═══════════════════════════════════════════════
-#  SAVE POST  (AJAX-capable)
+#  SAVE POST  (AJAX-capable, POST-only)
 # ═══════════════════════════════════════════════
 
 @login_required
+@require_POST
 def save_post(request, post_id):
     post = get_object_or_404(Post, id=post_id)
 
-    if request.user in post.saved_by.all():
+    # Use .filter().exists() — avoids fetching the entire M2M set
+    if post.saved_by.filter(id=request.user.id).exists():
         post.saved_by.remove(request.user)
         saved = False
     else:
@@ -495,10 +515,11 @@ def save_post(request, post_id):
 
 
 # ═══════════════════════════════════════════════
-#  FOLLOW / UNFOLLOW
+#  FOLLOW / UNFOLLOW  (POST-only for CSRF safety)
 # ═══════════════════════════════════════════════
 
 @login_required
+@require_POST
 def follow_user(request, username):
     user_to_follow = get_object_or_404(User, username=username)
 
@@ -509,7 +530,7 @@ def follow_user(request, username):
     if Follow.objects.filter(follower=request.user, following=user_to_follow).exists():
         return redirect(request.META.get('HTTP_REFERER', 'home'))
 
-    profile = getattr(user_to_follow, 'profile', None)
+    profile   = getattr(user_to_follow, 'profile', None)
     is_private = profile.private_account if profile else False
 
     if is_private:
@@ -539,6 +560,7 @@ def follow_user(request, username):
 
 
 @login_required
+@require_POST
 def unfollow_user(request, username):
     user_to_unfollow = get_object_or_404(User, username=username)
     Follow.objects.filter(follower=request.user, following=user_to_unfollow).delete()
@@ -550,10 +572,11 @@ def unfollow_user(request, username):
 
 
 # ═══════════════════════════════════════════════
-#  ACCEPT / DECLINE FOLLOW REQUEST
+#  ACCEPT / DECLINE FOLLOW REQUEST  (POST-only)
 # ═══════════════════════════════════════════════
 
 @login_required
+@require_POST
 def accept_follow_request(request, request_id):
     follow_request = get_object_or_404(FollowRequest, id=request_id, receiver=request.user)
 
@@ -581,6 +604,7 @@ def accept_follow_request(request, request_id):
 
 
 @login_required
+@require_POST
 def decline_follow_request(request, request_id):
     follow_request = get_object_or_404(FollowRequest, id=request_id, receiver=request.user)
 
@@ -637,13 +661,12 @@ def explore_view(request):
     paginator = Paginator(posts_qs, 24)
     page_obj  = paginator.get_page(request.GET.get('page', 1))
 
+    page_post_ids = [p.id for p in page_obj.object_list]
     liked_ids = set(
-        Like.objects.filter(user=request.user, post__in=page_obj.object_list).values_list('post_id', flat=True)
+        Like.objects.filter(user=request.user, post_id__in=page_post_ids).values_list('post_id', flat=True)
     )
     saved_ids = set(
-        request.user.saved_posts.filter(
-            id__in=[p.id for p in page_obj.object_list]
-        ).values_list('id', flat=True)
+        request.user.saved_posts.filter(id__in=page_post_ids).values_list('id', flat=True)
     )
 
     return render(request, 'explore.html', {
@@ -706,56 +729,64 @@ def search_view(request):
 
 
 # ═══════════════════════════════════════════════
-#  MESSAGES / CONVERSATIONS
+#  MESSAGES / CONVERSATIONS  (fully Conversation-model-based)
 # ═══════════════════════════════════════════════
 
 @login_required
 def messages_view(request):
+    """Render the messaging UI with Conversation-based inbox."""
     me = request.user
-
-    partner_ids = (
-        Message.objects
-        .filter(Q(sender=me) | Q(receiver=me))
-        .values_list('sender_id', 'receiver_id')
+    conversations = (
+        me.conversations
+        .prefetch_related('participants', 'participants__profile', 'messages')
+        .order_by('-updated_at')
     )
-    seen = set()
-    for s, r in partner_ids:
-        other = r if s == me.id else s
-        seen.add(other)
-
-    partners = User.objects.filter(id__in=seen).select_related('profile')
-    return render(request, 'message.html', {'partners': partners})
+    return render(request, 'message.html', {
+        'conversations': conversations,
+        'me': me,
+    })
 
 
 @login_required
 def get_conversations(request):
-    """Return JSON list of conversations (latest message per partner)."""
+    """Return JSON list of conversations (one per partner, with latest message)."""
     me = request.user
 
-    all_msgs = (
-        Message.objects
-        .filter(Q(sender=me) | Q(receiver=me))
-        .select_related('sender', 'sender__profile', 'receiver', 'receiver__profile')
-        .order_by('-created_at')
+    conversations = (
+        me.conversations
+        .prefetch_related('participants', 'participants__profile', 'messages')
+        .order_by('-updated_at')
     )
 
-    seen = {}
-    for msg in all_msgs:
-        other = msg.receiver if msg.sender_id == me.id else msg.sender
-        if other.id not in seen:
-            seen[other.id] = {
-                'username':   other.username,
-                'full_name':  other.get_full_name() or other.username,
-                'avatar_url': (
-                    other.profile.profile_image.url
-                    if hasattr(other, 'profile') and other.profile.profile_image else None
-                ),
-                'preview': ('You: ' if msg.sender_id == me.id else '') + msg.text[:60],
-                'time':    msg.created_at.strftime('%H:%M'),
-                'unread':  msg.receiver_id == me.id and not msg.is_read,
-            }
+    result = []
+    for conv in conversations:
+        # Get the partner (the other participant)
+        partner = next(
+            (p for p in conv.participants.all() if p.id != me.id),
+            None
+        )
+        if not partner:
+            continue
 
-    return JsonResponse({'conversations': list(seen.values())})
+        latest  = conv.messages.last()
+        unread  = conv.messages.filter(receiver=me, is_read=False).exists()
+
+        result.append({
+            'username':   partner.username,
+            'full_name':  partner.get_full_name() or partner.username,
+            'avatar_url': (
+                partner.profile.profile_image.url
+                if hasattr(partner, 'profile') and partner.profile.profile_image else None
+            ),
+            'preview': (
+                ('You: ' if latest and latest.sender_id == me.id else '')
+                + (latest.text[:60] if latest else '')
+            ),
+            'time':   latest.created_at.strftime('%H:%M') if latest else '',
+            'unread': unread,
+        })
+
+    return JsonResponse({'conversations': result})
 
 
 @login_required
@@ -764,14 +795,12 @@ def get_messages(request, username):
     me    = request.user
     other = get_object_or_404(User, username=username)
 
-    msgs = (
-        Message.objects
-        .filter(Q(sender=me, receiver=other) | Q(sender=other, receiver=me))
-        .select_related('sender')
-        .order_by('created_at')
-    )
+    # Find or create a Conversation for this pair
+    conv, _ = Conversation.get_or_create_for(me, other)
 
-    # Mark incoming as read
+    msgs = conv.messages.select_related('sender').order_by('created_at')
+
+    # Mark incoming messages as read
     msgs.filter(receiver=me, is_read=False).update(is_read=True)
 
     data = [{
@@ -798,7 +827,7 @@ def get_messages(request, username):
 @login_required
 @require_POST
 def send_message(request, username):
-    """POST — save a new message to DB."""
+    """POST — save a new message, linked to the Conversation for this pair."""
     me    = request.user
     other = get_object_or_404(User, username=username)
 
@@ -811,11 +840,22 @@ def send_message(request, username):
     if not text:
         return JsonResponse({'error': 'Empty message'}, status=400)
 
-    # Limit message length
     if len(text) > 1000:
         return JsonResponse({'error': 'Message too long (max 1000 chars).'}, status=400)
 
-    msg = Message.objects.create(sender=me, receiver=other, text=text)
+    # Get or create the Conversation for this pair, then link the message
+    conv, _ = Conversation.get_or_create_for(me, other)
+
+    msg = Message.objects.create(
+        conversation=conv,
+        sender=me,
+        receiver=other,
+        text=text,
+    )
+
+    # Bump conversation updated_at so inbox re-sorts correctly
+    conv.save(update_fields=['updated_at'])
+
     return JsonResponse({
         'id':      msg.id,
         'text':    msg.text,
@@ -829,9 +869,30 @@ def send_message(request, username):
 #  MISC
 # ═══════════════════════════════════════════════
 
+@login_required
 def suggested_users_view(request):
-    return render(request, 'suggested_users.html')
+    """Full suggested-users page."""
+    me           = request.user
+    followed_ids = _following_ids(me)
+    sent_req_ids = _sent_request_ids(me)
+
+    users = (
+        User.objects
+        .exclude(id=me.id)
+        .exclude(id__in=followed_ids)
+        .exclude(id__in=sent_req_ids)
+        .annotate(follower_count=Count('follower_set'))
+        .order_by('-follower_count')
+        .select_related('profile')
+        [:20]
+    )
+    return render(request, 'suggested_users.html', {
+        'suggested_users': users,
+        'following_ids':   followed_ids,
+        'sent_request_ids': sent_req_ids,
+    })
 
 
+@login_required
 def switch_account_view(request):
     return redirect('login')

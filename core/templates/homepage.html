@@ -1247,18 +1247,16 @@
         {# Action Buttons #}
         <div class="pac">
 
-          {# Like Form #}
+          {# Like Form — uses pre-fetched liked_ids set (zero extra DB queries) #}
           <form method="POST" action="{% url 'like_post' post.id %}" class="like-form">
             {% csrf_token %}
-            {% with liked=post.like_set.all %}
             <button type="submit" class="abtn lbtn" title="Like">
-              <svg viewBox="0 0 24 24" {% if request.user in liked %} fill="#ff3040" stroke="#ff3040" {% else %}
+              <svg viewBox="0 0 24 24" {% if post.id in liked_ids %} fill="#ff3040" stroke="#ff3040" {% else %}
                 fill="none" stroke="currentColor" {% endif %} stroke-width="1.8">
                 <path
                   d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
               </svg>
             </button>
-            {% endwith %}
           </form>
 
           {# Comment Button #}
@@ -1276,11 +1274,11 @@
             </svg>
           </button>
 
-          {# Bookmark / Save Form #}
+          {# Bookmark / Save Form — uses pre-fetched saved_ids set (zero extra DB queries) #}
           <form method="POST" action="{% url 'save_post' post.id %}" class="like-form" style="margin-left:auto">
             {% csrf_token %}
             <button type="submit" class="abtn bkbtn" title="Save">
-              <svg viewBox="0 0 24 24" {% if post.saved_by and request.user in post.saved_by.all %} fill="currentColor"
+              <svg viewBox="0 0 24 24" {% if post.id in saved_ids %} fill="currentColor"
                 {% else %} fill="none" {% endif %} stroke="currentColor" stroke-width="1.8">
                 <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
               </svg>
@@ -1292,8 +1290,8 @@
         {# Post Info #}
         <div class="pinfo">
 
-          {# Like count via Like model reverse relation #}
-          <div class="plikes">{{ post.like_set.count }} like{{ post.like_set.count|pluralize }}</div>
+          {# Like count — uses correct related_name='likes' from model #}
+          <div class="plikes">{{ post.likes.count }} like{{ post.likes.count|pluralize }}</div>
 
           {# Caption #}
           <div class="pcap">
@@ -1301,7 +1299,8 @@
           </div>
 
           {# Comment count toggle #}
-          {% with comment_count=post.comment_set.count %}
+          {# Comment count — uses correct related_name='comments' from model #}
+          {% with comment_count=post.comments.count %}
           {% if comment_count > 0 %}
           <a class="vcmt" onclick="toggleComments('cmt{{ post.id }}')">
             View all {{ comment_count }} comment{{ comment_count|pluralize }}
@@ -1309,9 +1308,9 @@
           {% endif %}
           {% endwith %}
 
-          {# Comments List #}
+          {# Comments List — uses prefetched comments queryset #}
           <div id="cmt{{ post.id }}" class="comment-box">
-            {% for comment in post.comment_set.all %}
+            {% for comment in post.comments.all %}
             <div style="display:flex;gap:8px;margin-bottom:8px;align-items:flex-start">
               <div
                 style="width:28px;height:28px;border-radius:50%;overflow:hidden;flex-shrink:0;border:1px solid #efefef">

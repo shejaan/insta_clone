@@ -89,8 +89,13 @@ class NotificationAdmin(admin.ModelAdmin):
 
 @admin.register(Conversation)
 class ConversationAdmin(admin.ModelAdmin):
-    list_display  = ('id', 'created_at', 'updated_at')
+    list_display      = ('id', 'participant_names', 'created_at', 'updated_at')
     filter_horizontal = ('participants',)
+    readonly_fields   = ('created_at', 'updated_at')
+
+    @admin.display(description='Participants')
+    def participant_names(self, obj):
+        return ', '.join(u.username for u in obj.participants.all())
 
 
 # ─────────────────────────────────────────────
@@ -99,7 +104,7 @@ class ConversationAdmin(admin.ModelAdmin):
 
 @admin.register(Message)
 class MessageAdmin(admin.ModelAdmin):
-    list_display   = ('sender', 'receiver', 'text', 'is_read', 'created_at')
+    list_display   = ('sender', 'receiver', 'conversation', 'is_read', 'created_at')
     search_fields  = ('sender__username', 'receiver__username', 'text')
     list_filter    = ('is_read', 'created_at')
     raw_id_fields  = ('sender', 'receiver', 'conversation')

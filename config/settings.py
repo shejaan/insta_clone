@@ -1,50 +1,69 @@
 """
 Django settings for insta_clone.
 
-Production-ready configuration with:
+Production-ready configuration:
   - Environment variable driven (SECRET_KEY, DATABASE_URL, CLOUDINARY_URL, DEBUG, ALLOWED_HOSTS)
+  - Cloudinary SDK native config (no fragile string parsing)
   - Cloudinary for media storage in production
-  - WhiteNoise for static files
+  - WhiteNoise for static files (CompressedManifestStaticFilesStorage)
   - Security headers gated behind DEBUG=False
   - PostgreSQL via DATABASE_URL on Render; SQLite locally
+  - ALLOWED_HOSTS raises ImproperlyConfigured when empty in production
+  - Critical warning when CLOUDINARY_URL is missing in production
 """
 
 from pathlib import Path
 import os
+import logging
 import dj_database_url
 from dotenv import load_dotenv
+from django.core.exceptions import ImproperlyConfigured
 
 load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+logger = logging.getLogger(__name__)
+
 # ─────────────────────────────────────────────
-#  SECURITY
+#  CORE
 # ─────────────────────────────────────────────
 
 SECRET_KEY = os.environ.get('SECRET_KEY', 'dev-secret-key-change-in-production')
 DEBUG      = os.environ.get('DEBUG', 'False') == 'True'
 
-# In production set ALLOWED_HOSTS env var to your Render domain, e.g.:
-# ALLOWED_HOSTS=myapp.onrender.com,www.myapp.com
-_raw_hosts = os.environ.get('ALLOWED_HOSTS', '')
-ALLOWED_HOSTS = [h.strip() for h in _raw_hosts.split(',') if h.strip()] if _raw_hosts else (['*'] if DEBUG else [])
+# ─────────────────────────────────────────────
+#  ALLOWED_HOSTS  (raises in production if not set)
+# ─────────────────────────────────────────────
 
-# Allow Render's auto-generated SSL domain and any custom domain
+_raw_hosts = os.environ.get('ALLOWED_HOSTS', '').strip()
+
+if _raw_hosts:
+    ALLOWED_HOSTS = [h.strip() for h in _raw_hosts.split(',') if h.strip()]
+elif DEBUG:
+    # Local development — allow all
+    ALLOWED_HOSTS = ['*']
+else:
+    raise ImproperlyConfigured(
+        "ALLOWED_HOSTS environment variable must be set in production.\n"
+        "Example: ALLOWED_HOSTS=yourapp.onrender.com"
+    )
+
+# Allow Render's SSL domain and any custom domain in CSRF
 CSRF_TRUSTED_ORIGINS = [
     f"https://{h}" for h in ALLOWED_HOSTS if not h.startswith('*')
 ]
 
 # Extra security headers (only in production)
 if not DEBUG:
-    SECURE_PROXY_SSL_HEADER    = ('HTTP_X_FORWARDED_PROTO', 'https')
-    SECURE_SSL_REDIRECT        = True
-    SESSION_COOKIE_SECURE      = True
-    CSRF_COOKIE_SECURE         = True
-    SECURE_HSTS_SECONDS        = 31536000  # 1 year
+    SECURE_PROXY_SSL_HEADER       = ('HTTP_X_FORWARDED_PROTO', 'https')
+    SECURE_SSL_REDIRECT           = True
+    SESSION_COOKIE_SECURE         = True
+    CSRF_COOKIE_SECURE            = True
+    SECURE_HSTS_SECONDS           = 31536000  # 1 year
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
-    SECURE_HSTS_PRELOAD        = True
-    SECURE_CONTENT_TYPE_NOSNIFF = True
+    SECURE_HSTS_PRELOAD           = True
+    SECURE_CONTENT_TYPE_NOSNIFF   = True
 
 
 # ─────────────────────────────────────────────
@@ -65,6 +84,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    # WhiteNoise must come directly after SecurityMiddleware
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -104,7 +124,11 @@ WSGI_APPLICATION = 'config.wsgi.application'
 _db_url = os.environ.get('DATABASE_URL')
 if _db_url:
     DATABASES = {
-        'default': dj_database_url.config(default=_db_url, conn_max_age=600, ssl_require=True)
+        'default': dj_database_url.config(
+            default=_db_url,
+            conn_max_age=600,
+            ssl_require=True,
+        )
     }
 else:
     DATABASES = {
@@ -128,9 +152,11 @@ AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
 ]
 
-LOGIN_URL            = '/login/'
-LOGIN_REDIRECT_URL   = '/'
-LOGOUT_REDIRECT_URL  = '/login/'
+LOGIN_URL           = '/login/'
+LOGIN_REDIRECT_URL  = '/'
+LOGOUT_REDIRECT_URL = '/login/'
+
+SESSION_COOKIE_AGE = 1209600  # 2 weeks
 
 
 # ─────────────────────────────────────────────
@@ -154,34 +180,55 @@ STATICFILES_DIRS = [BASE_DIR / 'static'] if (BASE_DIR / 'static').exists() else 
 
 # ─────────────────────────────────────────────
 #  MEDIA FILES  (Cloudinary in production, local in dev)
+#
+#  Uses cloudinary SDK native CLOUDINARY_URL parsing:
+#    cloudinary.config() reads CLOUDINARY_URL env var automatically.
+#  No more fragile manual string-splitting.
 # ─────────────────────────────────────────────
 
 MEDIA_URL  = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
-CLOUDINARY_URL = os.environ.get('CLOUDINARY_URL')
+CLOUDINARY_URL = os.environ.get('CLOUDINARY_URL', '')
 
 if CLOUDINARY_URL:
-    # Parse cloudinary://key:secret@cloud_name
-    _url = CLOUDINARY_URL.replace('cloudinary://', '')
-    _key_secret, _cloud = _url.rsplit('@', 1)
-    _key, _secret       = _key_secret.split(':', 1)
+    import cloudinary
 
+    # Let the SDK parse the URL natively — handles any cloud name format correctly
+    cloudinary.config()  # reads CLOUDINARY_URL from environment automatically
+
+    _cfg = cloudinary.config()
     CLOUDINARY_STORAGE = {
-        'CLOUD_NAME': _cloud,
-        'API_KEY':    _key,
-        'API_SECRET': _secret,
+        'CLOUD_NAME': _cfg.cloud_name,
+        'API_KEY':    _cfg.api_key,
+        'API_SECRET': _cfg.api_secret,
     }
 
     STORAGES = {
-        'default':    {'BACKEND': 'cloudinary_storage.storage.MediaCloudinaryStorage'},
+        'default':     {'BACKEND': 'cloudinary_storage.storage.MediaCloudinaryStorage'},
         'staticfiles': {'BACKEND': 'whitenoise.storage.CompressedManifestStaticFilesStorage'},
     }
 else:
+    if not DEBUG:
+        # Production without Cloudinary = uploaded files will vanish on Render redeploy
+        logging.getLogger('django').critical(
+            "CLOUDINARY_URL is not set in production! "
+            "Media uploads will be stored on the ephemeral Render filesystem "
+            "and will be LOST on every redeploy. Set CLOUDINARY_URL immediately."
+        )
+
     STORAGES = {
-        'default':    {'BACKEND': 'django.core.files.storage.FileSystemStorage'},
+        'default':     {'BACKEND': 'django.core.files.storage.FileSystemStorage'},
         'staticfiles': {'BACKEND': 'whitenoise.storage.CompressedManifestStaticFilesStorage'},
     }
+
+
+# ─────────────────────────────────────────────
+#  EMAIL  (console in dev, configure SMTP in prod)
+# ─────────────────────────────────────────────
+
+if DEBUG:
+    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 
 # ─────────────────────────────────────────────
