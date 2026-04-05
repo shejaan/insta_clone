@@ -151,26 +151,8 @@ nav{
 </div>
 
 <script>
-/* ══════════════════════════════════
-   USERS DATABASE
-══════════════════════════════════ */
-const usersDB = [
-  {un:'sophiaa',      name:'Sophia Rose',  av:'🌸', bg:'linear-gradient(135deg,#ffd6e7,#ffb3ba)', posts:47,  followers:12400, following:382},
-  {un:'jakewaves',    name:'Jake Miller',  av:'🏄', bg:'linear-gradient(135deg,#c3d5ff,#a8c8ff)', posts:31,  followers:8900,  following:210},
-  {un:'artbylu',      name:'Lu Chen',      av:'🎨', bg:'linear-gradient(135deg,#e8d5ff,#d0b0ff)', posts:88,  followers:21000, following:140},
-  {un:'green.living', name:'Eco Maya',     av:'🌿', bg:'linear-gradient(135deg,#d6ffd8,#b3f0b5)', posts:22,  followers:5400,  following:310},
-  {un:'lens.life',    name:'Lens Life',    av:'📸', bg:'linear-gradient(135deg,#ffecd2,#fcb69f)', posts:64,  followers:9800,  following:490},
-  {un:'foodienyc',    name:'NYC Foodie',   av:'🍕', bg:'linear-gradient(135deg,#a8edea,#fed6e3)', posts:120, followers:34000, following:890},
-  {un:'rufuspup',     name:'Rufus 🐾',     av:'🐶', bg:'linear-gradient(135deg,#fff3b3,#ffe0a8)', posts:14,  followers:2100,  following:88},
-  {un:'beatsbymika',  name:'Mika Sounds',  av:'🎵', bg:'linear-gradient(135deg,#fbc2eb,#a6c1ee)', posts:55,  followers:7200,  following:210},
-  {un:'john_doe',     name:'John Doe',     av:'👨', bg:'linear-gradient(135deg,#c3d5ff,#a8c8ff)', posts:18,  followers:940,   following:310},
-  {un:'john_dev',     name:'John Dev',     av:'🧑‍💻', bg:'linear-gradient(135deg,#d6ffd8,#b3f0b5)',posts:42, followers:3100,  following:180},
-  {un:'john123',      name:'John Smith',   av:'👦', bg:'linear-gradient(135deg,#ffd6e7,#ffb3ba)', posts:7,   followers:210,   following:98},
-  {un:'nightowl99',   name:'Night Owl',    av:'🌙', bg:'linear-gradient(135deg,#c3d5ff,#a8c8ff)', posts:33,  followers:1800,  following:400},
-  {un:'morningbrew',  name:'Coffee Daily', av:'☕', bg:'linear-gradient(135deg,#ffecd2,#fcb69f)', posts:29,  followers:6700,  following:320},
-  {un:'peakchaser',   name:'Peak Chaser',  av:'🏔️', bg:'linear-gradient(135deg,#d6ffd8,#b3f0b5)',posts:61,  followers:4800,  following:270},
-  {un:'butterfly.art',name:'Asha Patel',   av:'🦋', bg:'linear-gradient(135deg,#ffd6e7,#ffb3ba)', posts:35,  followers:3200,  following:190},
-];
+/* ―― USERS DATABASE (Dynamic) ―― */
+// Backend search endpoint will be used for live results.
 
 /* ── Recent searches (session only) ── */
 let recentSearches = JSON.parse(sessionStorage.getItem('ig_recent') || '[]');
@@ -218,59 +200,58 @@ function renderRecent(){
       </div>`;
     return;
   }
-  const users = recentSearches.map(un=>usersDB.find(u=>u.un===un)).filter(Boolean);
-  area.innerHTML=`
-    <div class="section-label">Recent</div>
-    ${users.map(u=>`
-      <div class="user-item" onclick="goProfile('${u.un}')">
-        <div class="user-av" style="background:${u.bg}">${u.av}</div>
+    <div class="section-label">Recent Searches Local Only</div>
+    ${recentSearches.map(un=>`
+      <div class="user-item" onclick="goProfile('${un}')">
+        <div class="user-av" style="background:#fafafa">🧑</div>
         <div class="user-info">
-          <span class="user-un">${u.un}</span>
-          <span class="user-name">${u.name}</span>
-          <span class="user-meta">${fmt(u.followers)} followers</span>
+          <span class="user-un">${un}</span>
         </div>
-        <button class="remove-btn" onclick="event.stopPropagation();removeRecent('${u.un}')">
+        <button class="remove-btn" onclick="event.stopPropagation();removeRecent('${un}')">
           <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
         </button>
       </div>`).join('')}`;
 }
 
-/* ── Render search results ── */
-function renderResults(q){
-  const area = document.getElementById('resultsArea');
-  const results = usersDB.filter(u=>
-    u.un.toLowerCase().includes(q.toLowerCase()) ||
-    u.name.toLowerCase().includes(q.toLowerCase())
-  );
-  if(!results.length){
-    area.innerHTML=`
-      <div class="empty-state">
-        <div class="empty-icon">
-          <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-        </div>
-        <div class="empty-title">No results</div>
-        <div class="empty-sub">No accounts found for "<b>${q}</b>". Try a different name or username.</div>
-      </div>`;
-    return;
-  }
-  area.innerHTML = results.map((u,i)=>`
-    <div class="user-item" style="animation-delay:${i*0.04}s" onclick="goProfile('${u.un}')">
-      <div class="user-av" style="background:${u.bg}">${u.av}</div>
-      <div class="user-info">
-        <span class="user-un">${highlight(u.un,q)}</span>
-        <span class="user-name">${highlight(u.name,q)}</span>
-        <span class="user-meta">${fmt(u.followers)} followers</span>
-      </div>
-      <div class="chevron"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></div>
-    </div>`).join('');
-}
-
-/* ── Input handler ── */
+/* ―― Render search results (Live AJAX) ―― */
+let searchTimeout;
 function onSearch(val){
   const q = val.trim();
   document.getElementById('clearBtn').classList.toggle('show', !!q);
   if(!q){ renderRecent(); return; }
-  renderResults(q);
+
+  clearTimeout(searchTimeout);
+  searchTimeout = setTimeout(() => {
+    fetch('/search/?json=1&q=' + encodeURIComponent(q))
+      .then(res => res.json())
+      .then(data => {
+        const area = document.getElementById('resultsArea');
+        if (!data.users || data.users.length === 0) {
+          area.innerHTML=`
+            <div class="empty-state">
+              <div class="empty-icon"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div>
+              <div class="empty-title">No results</div>
+              <div class="empty-sub">No accounts found for "<b>${q}</b>".</div>
+            </div>`;
+          return;
+        }
+        area.innerHTML = data.users.map((u,i) => {
+          const avHTML = u.avatar_url 
+            ? `<img src="${u.avatar_url}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`
+            : `🧑`;
+          return `
+          <div class="user-item" style="animation-delay:${i*0.04}s" onclick="goProfile('${u.username}')">
+            <div class="user-av" style="background:#fafafa;border:1px solid #efefef">${avHTML}</div>
+            <div class="user-info">
+              <span class="user-un">${highlight(u.username, q)}</span>
+              <span class="user-name">${highlight(u.full_name, q)}</span>
+            </div>
+            <div class="chevron"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></div>
+          </div>`;
+        }).join('');
+      })
+      .catch(err => console.error('Search failed:', err));
+  }, 300);
 }
 
 function clearSearch(){

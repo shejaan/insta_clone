@@ -1525,7 +1525,18 @@
     }
     function closeCreatePost() {
       document.getElementById('cpOverlay').classList.remove('open');
-      document.body.style.overflow = '';
+      document.body.style.overflow = '';  /* \u2190 always restore scroll */
+    }
+
+    /* ―― CSRF helper: reads cookie, falls back to hidden input ―― */
+    function getCsrfToken() {
+      var name = 'csrftoken', val = null;
+      document.cookie.split(';').forEach(function(c) {
+        c = c.trim();
+        if (c.startsWith(name + '=')) val = decodeURIComponent(c.slice(name.length + 1));
+      });
+      if (!val) { var el = document.querySelector('[name=csrfmiddlewaretoken]'); if (el) val = el.value; }
+      return val || '';
     }
 
     /* image preview → go to Step 2 */
@@ -1574,7 +1585,7 @@
       fd.append('image', fileInput.files[0]);
       fd.append('caption', document.getElementById('cpCaption').value);
       fd.append('location', document.getElementById('cpLocation').value);
-      fd.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+      fd.append('csrfmiddlewaretoken', getCsrfToken());
 
       fetch('{% url "create_post" %}', {
         method: 'POST',
@@ -1620,41 +1631,143 @@
       var feed = document.querySelector('.feed');
       if (!feed) return;
 
-      // Remove "No posts yet" empty state if present
       var emptyCard = feed.querySelector('[style*="No posts"]');
       if (emptyCard) emptyCard.remove();
 
-      var html = `<div class="post" style="animation:up .4s ease both">
-        <div class="ph">
-          <div class="par"><div class="pari">&#x1F9D1;</div></div>
-          <div class="pm"><div class="pun">${escHtml(post.username)}</div></div>
-        </div>
-        <div class="pimg"><img src="${post.image_url}" alt="${escHtml(post.caption)}" style="width:100%"></div>
-        <div class="pac">
-          <button class="abtn lbtn">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" /></svg>
-          </button>
-        </div>
-        <div class="pinfo">
-          <div class="plikes">0 likes</div>
-          ${post.caption ? `<div class="pcap"><span class="un">${escHtml(post.username)}</span> ${escHtml(post.caption)}</div>` : ''}
-        </div>
-        <div class="ptime">just now</div>
-      </div>`;
+      var csrf = getCsrfToken();
+      var pid = post.id || '';
+      var likeUrl = '/like/' + pid + '/';
+      var cmtUrl  = '/comment/' + pid + '/';
 
-      // Always insert AFTER .sbar so stories stay on top
+      var html = '<div class="post" style="animation:up .4s ease both" data-post-id="' + pid + '">'
+        + '<div class="ph"><div class="par"><div class="pari">&#x1F9D1;</div></div>'
+        + '<div class="pm"><div class="pun">' + escHtml(post.username) + '</div></div></div>'
+        + '<div class="pimg"><img src="' + post.image_url + '" alt="' + escHtml(post.caption) + '" style="width:100%"></div>'
+        + '<div class="pac">'
+        + '<form method="POST" action="' + likeUrl + '" class="like-form">'
+        + '<input type="hidden" name="csrfmiddlewaretoken" value="' + escHtml(csrf) + '">'
+        + '<button type="submit" class="abtn lbtn" title="Like">'
+        + '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">'
+        + '<path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" /></svg>'
+        + '</button></form></div>'
+        + '<div class="pinfo"><div class="plikes">0 likes</div>'
+        + (post.caption ? '<div class="pcap"><span class="un">' + escHtml(post.username) + '</span> ' + escHtml(post.caption) + '</div>' : '')
+        + '</div><div class="ptime">just now</div>'
+        + '<form method="POST" action="' + cmtUrl + '" class="crow">'
+        + '<input type="hidden" name="csrfmiddlewaretoken" value="' + escHtml(csrf) + '">'
+        + '<input class="cinput" type="text" name="text" placeholder="Add a comment\u2026" autocomplete="off" required>'
+        + '<button type="submit" class="postbtn">Post</button></form>'
+        + '</div>';
+
       var sbar = feed.querySelector('.sbar');
       if (sbar) {
         sbar.insertAdjacentHTML('afterend', html);
       } else {
-        // No stories bar — insert before first post or at top of feed
         var firstPost = feed.querySelector('.post');
         if (firstPost) { firstPost.insertAdjacentHTML('beforebegin', html); }
         else { feed.insertAdjacentHTML('afterbegin', html); }
       }
+      /* Reinitialize AJAX on the new card */
+      var newPost = feed.querySelector('.post[data-post-id="' + pid + '"]');
+      if (newPost) attachPostHandlers(newPost);
     }
 
     function escHtml(t) { if (!t) return ''; return String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+
+    /* ―――――――――――――――――――――――――――――――――――――――――
+       AJAX Like / Comment — intercept form submits
+    ――――――――――――――――――――――――――――――――――――――――― */
+    function attachPostHandlers(scope) {
+      scope = scope || document;
+
+      /* Like forms */
+      scope.querySelectorAll('form.like-form').forEach(function(form) {
+        if (form.dataset.ajaxBound) return;
+        form.dataset.ajaxBound = '1';
+        form.addEventListener('submit', function(e) {
+          e.preventDefault();
+          var btn = form.querySelector('button');
+          fetch(form.action, {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: {
+              'X-CSRFToken': getCsrfToken(),
+              'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: new URLSearchParams({ csrfmiddlewaretoken: getCsrfToken() })
+          }).then(function(r) { if (!r.ok) throw new Error(r.status); return r.json(); })
+          .then(function(data) {
+            var svg = btn && btn.querySelector('svg');
+            if (svg) {
+              svg.setAttribute('fill',   data.liked ? '#ff3040' : 'none');
+              svg.setAttribute('stroke', data.liked ? '#ff3040' : 'currentColor');
+            }
+            var post = form.closest('.post');
+            if (post && data.like_count !== undefined) {
+              var el = post.querySelector('.plikes');
+              if (el) { var n = data.like_count; el.textContent = n + ' like' + (n === 1 ? '' : 's'); }
+            }
+            if (btn) { btn.style.transform = 'scale(1.4)'; setTimeout(function() { btn.style.transform = ''; }, 200); }
+          }).catch(function(err) { console.error('[Like]', err); showToast('Could not update like.'); });
+        });
+      });
+
+      /* Comment forms */
+      scope.querySelectorAll('form.crow').forEach(function(form) {
+        if (form.dataset.ajaxBound) return;
+        form.dataset.ajaxBound = '1';
+        form.addEventListener('submit', function(e) {
+          e.preventDefault();
+          var input = form.querySelector('.cinput');
+          var text  = input ? input.value.trim() : '';
+          if (!text) return;
+          var subBtn = form.querySelector('.postbtn');
+          if (subBtn) subBtn.disabled = true;
+          fetch(form.action, {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: {
+              'X-CSRFToken': getCsrfToken(),
+              'X-Requested-With': 'XMLHttpRequest',
+              'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            body: 'csrfmiddlewaretoken=' + encodeURIComponent(getCsrfToken()) + '&text=' + encodeURIComponent(text)
+          }).then(function(r) { if (!r.ok) throw new Error(r.status); return r.json(); })
+          .then(function(data) {
+            if (subBtn) subBtn.disabled = false;
+            if (!data.success) { showToast(data.error || 'Could not post comment.'); return; }
+            if (input) input.value = '';
+            var post = form.closest('.post');
+            if (post) {
+              var m = form.action.match(/\/comment\/(\d+)\//), pid = m ? m[1] : null;
+              if (pid) {
+                var box = document.getElementById('cmt' + pid);
+                if (box) {
+                  var c = data.comment;
+                  var avHTML = c.avatar ? '<img src="' + escHtml(c.avatar) + '" style="width:100%;height:100%;object-fit:cover">' : '\uD83E\uDDD1';
+                  var row = document.createElement('div');
+                  row.style.cssText = 'display:flex;gap:8px;margin-bottom:8px;align-items:flex-start';
+                  row.innerHTML = '<div style="width:28px;height:28px;border-radius:50%;overflow:hidden;flex-shrink:0;border:1px solid #efefef">' + avHTML + '</div>'
+                    + '<div style="font-size:13px;line-height:1.45"><span style="font-weight:700;margin-right:4px">' + escHtml(c.username) + '</span>' + escHtml(c.text) + '</div>';
+                  box.style.display = 'block';
+                  box.appendChild(row);
+                }
+              }
+              showToast('Comment posted! \uD83D\uDCAC');
+            }
+          }).catch(function(err) { if (subBtn) subBtn.disabled = false; console.error('[Comment]', err); showToast('Could not post comment.'); });
+        });
+      });
+    }
+
+    /* Add data-post-id attrs to server-rendered posts for AJAX comment box targeting */
+    document.querySelectorAll('.post').forEach(function(post) {
+      var lf = post.querySelector('form.like-form');
+      if (lf) { var m = lf.action.match(/\/like\/(\d+)\//); if (m) post.dataset.postId = m[1]; }
+    });
+
+    /* Bind handlers on initial page load */
+    attachPostHandlers(document);
 
     /* notification dropdown */
     var notifOpen = false;
@@ -1666,7 +1779,8 @@
     document.addEventListener('click', function () {
       if (notifOpen) {
         notifOpen = false;
-        document.getElementById('notifDrop').style.display = 'none';
+        var d = document.getElementById('notifDrop');
+        if (d) d.style.display = 'none';
       }
     });
 
