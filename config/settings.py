@@ -57,7 +57,7 @@ CSRF_TRUSTED_ORIGINS = [
 # Extra security headers (only in production)
 if not DEBUG:
     SECURE_PROXY_SSL_HEADER       = ('HTTP_X_FORWARDED_PROTO', 'https')
-    SECURE_SSL_REDIRECT = False
+    SECURE_SSL_REDIRECT           = True
     SESSION_COOKIE_SECURE         = True
     CSRF_COOKIE_SECURE            = True
     SECURE_HSTS_SECONDS           = 31536000  # 1 year
@@ -176,7 +176,6 @@ USE_TZ        = True
 STATIC_URL  = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_DIRS = [BASE_DIR / 'static'] if (BASE_DIR / 'static').exists() else []
-WHITENOISE_MANIFEST_STRICT = False
 
 
 # ─────────────────────────────────────────────
@@ -207,7 +206,10 @@ if CLOUDINARY_URL:
 
     STORAGES = {
         'default':     {'BACKEND': 'cloudinary_storage.storage.MediaCloudinaryStorage'},
-        'staticfiles': {'BACKEND': 'whitenoise.storage.CompressedManifestStaticFilesStorage'},
+        'staticfiles': {
+            'BACKEND': 'whitenoise.storage.CompressedManifestStaticFilesStorage',
+            'OPTIONS': {'manifest_strict': False},
+        },
     }
 else:
     if not DEBUG:
@@ -220,7 +222,10 @@ else:
 
     STORAGES = {
         'default':     {'BACKEND': 'django.core.files.storage.FileSystemStorage'},
-        'staticfiles': {'BACKEND': 'whitenoise.storage.CompressedManifestStaticFilesStorage'},
+        'staticfiles': {
+            'BACKEND': 'whitenoise.storage.CompressedManifestStaticFilesStorage',
+            'OPTIONS': {'manifest_strict': False},
+        },
     }
 
 
