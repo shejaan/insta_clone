@@ -83,6 +83,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    'core.middleware.AdminDebugMiddleware',
     'django.middleware.security.SecurityMiddleware',
     # WhiteNoise must come directly after SecurityMiddleware
     'whitenoise.middleware.WhiteNoiseMiddleware',
