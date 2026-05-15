@@ -688,6 +688,7 @@
       if(inp && activeEditId) inp.value = '';
     }
 
+    var _lastMsgData = "";
     function renderMessages(msgs, other) {
       var dataStr = JSON.stringify(msgs);
       if (dataStr === _lastMsgData) return;
