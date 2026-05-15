@@ -326,6 +326,45 @@
       .shell.mobile-chat-active .chat { display: flex; width: 100%; }
       .back-btn-mobile { display: flex; }
     }
+
+    /* ── MESSAGE ACTIONS & REPLY UI ── */
+    .msg-menu {
+      position: absolute; background: var(--bg-3); border: 1px solid var(--border);
+      border-radius: 12px; padding: 6px 0; z-index: 1000; display: none;
+      box-shadow: 0 10px 30px rgba(0,0,0,.6); min-width: 140px;
+    }
+    .msg-menu.show { display: block; }
+    .msg-menu-item {
+      padding: 10px 16px; font-size: 14px; color: var(--dark); cursor: pointer;
+      transition: background .15s; display: flex; align-items: center; gap: 8px;
+    }
+    .msg-menu-item:hover { background: rgba(255,255,255,0.06); }
+    .msg-menu-item.danger { color: #f87171; }
+
+    .reply-banner {
+      display: none; padding: 10px 16px; background: var(--bg-3);
+      border-top: 1px solid var(--border); align-items: center; justify-content: space-between;
+      border-top-left-radius: 16px; border-top-right-radius: 16px; margin-bottom: -1px;
+    }
+    .reply-banner.show { display: flex; }
+    .reply-info { display: flex; flex-direction: column; }
+    .reply-title { font-size: 12px; font-weight: 700; color: var(--gray); }
+    .reply-text { font-size: 13px; color: var(--dark); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px; }
+    .reply-close { cursor: pointer; color: var(--gray); font-size: 18px; }
+    .reply-close:hover { color: var(--dark); }
+
+    .bubble-wrapper { position: relative; max-width: 65%; display: flex; flex-direction: column; }
+    .reply-ref {
+      font-size: 12px; color: var(--gray); margin-bottom: 4px; padding-left: 8px;
+      border-left: 2px solid var(--border); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      opacity: 0.8; cursor: pointer;
+    }
+    .msg-row.out .reply-ref { border-left: none; border-right: 2px solid rgba(255,255,255,0.3); padding-left: 0; padding-right: 8px; text-align: right; color: rgba(255,255,255,0.7); }
+    
+    .msg-edited { font-size: 10px; opacity: 0.6; margin-left: 6px; }
+    
+    .chat-input-wrapper { display: flex; flex-direction: column; flex-shrink: 0; background: var(--bg-2); border-top: 1px solid var(--border); }
+    .chat-input-area { border-top: none; }
   </style>
 </head>
 
@@ -421,6 +460,14 @@
         <div style="text-align:center;padding:20px;color:var(--gray);font-size:13px">Type a username to search</div>
       </div>
     </div>
+  </div>
+
+  <!-- ── CONTEXT MENU ── -->
+  <div class="msg-menu" id="msgMenu">
+    <div class="msg-menu-item" onclick="handleMenuAction('reply')">Reply</div>
+    <div class="msg-menu-item" onclick="handleMenuAction('copy')">Copy</div>
+    <div class="msg-menu-item" id="menuEdit" onclick="handleMenuAction('edit')">Edit</div>
+    <div class="msg-menu-item danger" id="menuUnsend" onclick="handleMenuAction('unsend')">Unsend</div>
   </div>
 
   <script>
@@ -522,7 +569,7 @@
         .then(function (r) { return r.json(); })
         .then(function (data) {
           if (firstLoad) buildChatUI(data.other, data.messages);
-          else updateMessages(data.messages);
+          else renderMessages(data.messages, data.other);
           // Refresh sidebar to clear unread badges
           if (firstLoad) loadConversations();
         });
@@ -548,61 +595,161 @@
       </div>
     </div>
     <div class="messages-area" id="msgArea"></div>
-    <div class="chat-input-area">
-      <div class="msg-input-wrap">
-        <textarea class="msg-input" id="msgInput" placeholder="Message ${esc(other.full_name)}…" rows="1"
-          onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
-        <span class="emoji-btn" onclick="insertEmoji()">😊</span>
+    <div class="chat-input-wrapper">
+      <div class="reply-banner" id="replyBanner">
+        <div class="reply-info">
+          <span class="reply-title" id="replyTitle">Replying to...</span>
+          <span class="reply-text" id="replyText">...</span>
+        </div>
+        <span class="reply-close" onclick="cancelReply()">✕</span>
       </div>
-      <button class="send-btn" onclick="sendMessage()" title="Send">
-        <svg viewBox="0 0 24 24" fill="none" stroke="#0095f6" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2" fill="#0095f6" stroke="none"/></svg>
-      </button>
+      <div class="chat-input-area">
+        <div class="msg-input-wrap">
+          <textarea class="msg-input" id="msgInput" placeholder="Message ${esc(other.full_name)}…" rows="1"
+            onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
+          <span class="emoji-btn" onclick="insertEmoji()">😊</span>
+        </div>
+        <button class="send-btn" onclick="sendMessage()" title="Send">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#0095f6" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2" fill="#0095f6" stroke="none"/></svg>
+        </button>
+      </div>
     </div>`;
 
       renderMessages(msgs, other);
       scrollBottom();
     }
 
+    let activeReplyId = null;
+    let activeEditId = null;
+    let selectedMsgId = null;
+    let selectedMsgText = '';
+    let selectedMsgOut = false;
+
+    // Close menu on click outside
+    document.addEventListener('click', function(e) {
+      var menu = document.getElementById('msgMenu');
+      if(menu && !e.target.closest('#msgMenu')) menu.classList.remove('show');
+    });
+
+    function showMenu(e, id, text, out) {
+      if(e.cancelable) e.preventDefault();
+      selectedMsgId = id;
+      selectedMsgText = text;
+      selectedMsgOut = out;
+      
+      var menu = document.getElementById('msgMenu');
+      document.getElementById('menuEdit').style.display = out ? 'flex' : 'none';
+      document.getElementById('menuUnsend').style.display = out ? 'flex' : 'none';
+      
+      menu.classList.add('show');
+      
+      // Position menu near click/touch
+      var x = e.pageX || (e.touches && e.touches[0].pageX) || window.innerWidth / 2;
+      var y = e.pageY || (e.touches && e.touches[0].pageY) || window.innerHeight / 2;
+      
+      menu.style.left = Math.min(x, window.innerWidth - 150) + 'px';
+      menu.style.top = Math.min(y, window.innerHeight - 180) + 'px';
+    }
+
+    function handleMenuAction(action) {
+      document.getElementById('msgMenu').classList.remove('show');
+      if(action === 'copy') {
+        navigator.clipboard.writeText(selectedMsgText);
+      } else if(action === 'reply') {
+        activeReplyId = selectedMsgId;
+        activeEditId = null;
+        document.getElementById('replyBanner').classList.add('show');
+        document.getElementById('replyTitle').textContent = selectedMsgOut ? 'Replying to yourself' : 'Replying';
+        document.getElementById('replyText').textContent = selectedMsgText;
+        document.getElementById('msgInput').focus();
+      } else if(action === 'edit' && selectedMsgOut) {
+        activeEditId = selectedMsgId;
+        activeReplyId = null;
+        document.getElementById('replyBanner').classList.add('show');
+        document.getElementById('replyTitle').textContent = 'Editing Message';
+        document.getElementById('replyText').textContent = selectedMsgText;
+        var inp = document.getElementById('msgInput');
+        inp.value = selectedMsgText;
+        inp.focus();
+      } else if(action === 'unsend' && selectedMsgOut) {
+        fetch('/messages/' + selectedMsgId + '/delete/', {
+          method: 'DELETE',
+          headers: {'X-CSRFToken': CSRF}
+        }).then(function(r) { return r.json(); }).then(function() { fetchMessages(activeUser, false); loadConversations(); });
+      }
+    }
+
+    function cancelReply() {
+      activeReplyId = null;
+      activeEditId = null;
+      var banner = document.getElementById('replyBanner');
+      if(banner) banner.classList.remove('show');
+      var inp = document.getElementById('msgInput');
+      if(inp && activeEditId) inp.value = '';
+    }
+
     /* ── Render messages into #msgArea ── */
-    var _lastMsgCount = 0;
+    var _lastMsgData = "";
     function renderMessages(msgs, other) {
-      if (!msgs || msgs.length === _lastMsgCount) return;
-      _lastMsgCount = msgs.length;
+      var dataStr = JSON.stringify(msgs);
+      if (dataStr === _lastMsgData) return;
+      _lastMsgData = dataStr;
+      
       var area = document.getElementById('msgArea');
       if (!area) return;
 
-      area.innerHTML = '<div class="msg-date-sep">Today</div>' +
-        msgs.map(function (m) {
-          var isEmoji = /^\p{Emoji}+$/u.test(m.text) && m.text.length <= 4;
-          if (m.out) {
-            return `<div class="msg-row out">
-          <div class="bubble ${isEmoji ? 'emoji-only' : ''}">${esc(m.text)}</div>
-        </div>`;
-          } else {
-            return `<div class="msg-row in">
-          <div class="msg-av">${avHTML(other ? other.avatar_url : null, 28)}</div>
-          <div class="bubble ${isEmoji ? 'emoji-only' : ''}">${esc(m.text)}</div>
-        </div>`;
-          }
-        }).join('');
-
-      // Seen indicator for last outgoing message
-      if (msgs.length) {
-        var last = msgs[msgs.length - 1];
-        if (last.out) {
-          area.innerHTML += `<div class="seen-row"><span class="seen-text">${last.is_read ? 'Seen' : 'Delivered'}</span></div>`;
+      var isScrolledToBottom = area.scrollHeight - area.clientHeight <= area.scrollTop + 50;
+      var html = '<div class="msg-date-sep">Today</div>';
+      
+      msgs.forEach(function (m) {
+        var text = m.is_deleted ? '<i>Message unsent</i>' : esc(m.text);
+        var isEmoji = !m.is_deleted && /^\\p{Emoji}+$/u.test(m.text) && m.text.length <= 8;
+        
+        var replyHtml = '';
+        if(m.reply_to && !m.is_deleted) {
+           var rText = m.reply_to.text || 'Message unsent';
+           replyHtml = \`<div class="reply-ref">\${m.reply_to.out ? 'You' : esc(other?other.username:'')}: \${esc(rText)}</div>\`;
         }
+
+        var editHtml = m.is_edited && !m.is_deleted ? \`<span class="msg-edited">(edited)</span>\` : '';
+        
+        var safeText = m.text ? esc(m.text).replace(/'/g, "\\\\'") : '';
+        var menuEvents = !m.is_deleted ? \`oncontextmenu="showMenu(event, \${m.id}, '\${safeText}', \${m.out})"\` : '';
+        menuEvents += !m.is_deleted ? \` ontouchstart="window.lt=setTimeout(function(){showMenu(event, \${m.id}, '\${safeText}', \${m.out})}, 500)" ontouchend="clearTimeout(window.lt)" ontouchmove="clearTimeout(window.lt)"\` : '';
+
+        var deletedStyle = m.is_deleted ? 'background:transparent;border:1px solid var(--border);color:var(--gray);font-style:italic;' : '';
+
+        if (m.out) {
+          html += \`<div class="msg-row out">
+            <div class="bubble-wrapper" \${menuEvents}>
+              \${replyHtml}
+              <div class="bubble \${isEmoji ? 'emoji-only' : ''}" style="\${deletedStyle}">\${text}\${editHtml}</div>
+            </div>
+          </div>\`;
+        } else {
+          html += \`<div class="msg-row in">
+            <div class="msg-av">\${avHTML(other ? other.avatar_url : null, 28)}</div>
+            <div class="bubble-wrapper" \${menuEvents}>
+              \${replyHtml}
+              <div class="bubble \${isEmoji ? 'emoji-only' : ''}" style="\${deletedStyle}">\${text}\${editHtml}</div>
+            </div>
+          </div>\`;
+        }
+      });
+
+      // Seen indicator
+      var lastOut = msgs.slice().reverse().find(function(m) { return m.out; });
+      if (lastOut) {
+          html += \`<div class="seen-row"><span class="seen-text">\${lastOut.is_read ? 'Seen' : 'Delivered'}</span></div>\`;
       }
 
-      scrollBottom();
+      area.innerHTML = html;
+      if (isScrolledToBottom || msgs.length <= 15) scrollBottom();
     }
 
     function updateMessages(msgs) {
-      var area = document.getElementById('msgArea');
-      if (!area || !activeUser) return;
-      // Get "other" info from panel header
-      var other = null;
-      renderMessages(msgs, other);
+      // Replaced by passing 'other' correctly, but keeping for compatibility if called
+      renderMessages(msgs, {username: activeUser}); 
     }
 
     /* ── Send message ── */
@@ -612,40 +759,36 @@
       var text = input.value.trim();
       if (!text) return;
 
+      if(activeEditId) {
+         fetch('/messages/' + activeEditId + '/edit/', {
+           method: 'PATCH',
+           headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF },
+           body: JSON.stringify({ text: text })
+         }).then(function(r){return r.json();}).then(function() {
+           cancelReply();
+           fetchMessages(activeUser, false);
+           input.value = '';
+         });
+         return;
+      }
+
+      var payload = { text: text };
+      if(activeReplyId) { payload.reply_to = activeReplyId; }
+
       input.value = '';
       input.style.height = 'auto';
+      cancelReply();
 
       fetch('/messages/send/' + activeUser + '/', {
         method: 'POST',
-        credentials: 'same-origin',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRFToken': CSRF
-        },
-        body: JSON.stringify({ text: text })
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF },
+        body: JSON.stringify(payload)
       })
         .then(function (r) { return r.json(); })
         .then(function (msg) {
-          // Append new message immediately
-          var area = document.getElementById('msgArea');
-          if (!area) return;
-          var seen = area.querySelector('.seen-row');
-          if (seen) seen.remove();
-
-          var isEmoji = /^\p{Emoji}+$/u.test(msg.text) && msg.text.length <= 4;
-          var row = document.createElement('div');
-          row.className = 'msg-row out';
-          row.innerHTML = `<div class="bubble ${isEmoji ? 'emoji-only' : ''}">${esc(msg.text)}</div>`;
-          area.appendChild(row);
-
-          var seenDiv = document.createElement('div');
-          seenDiv.className = 'seen-row';
-          seenDiv.innerHTML = '<span class="seen-text">Delivered</span>';
-          area.appendChild(seenDiv);
-
-          _lastMsgCount++;
-          scrollBottom();
-          loadConversations();
+           fetchMessages(activeUser, false);
+           setTimeout(scrollBottom, 100);
+           loadConversations();
         })
         .catch(function () { /* silently fail */ });
     }
