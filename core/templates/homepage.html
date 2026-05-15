@@ -69,6 +69,14 @@
 
   {# 1. CSRF + response helpers (must be first) #}
   <script src="{% static 'js/ajax.js' %}"></script>
+  
+  <script>
+    {% if posts %}
+      window.latestFeedPostId = {{ posts.0.id }};
+    {% else %}
+      window.latestFeedPostId = 0;
+    {% endif %}
+  </script>
 
   {# 2. Shared UI: toast, toggleComments, openCreatePost #}
   <script src="{% static 'js/homepage.js' %}"></script>

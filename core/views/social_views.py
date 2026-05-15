@@ -215,3 +215,19 @@ def mark_all_notifications_read(request):
     """AJAX endpoint to mark all notifications as read."""
     Notification.objects.filter(receiver=request.user, is_read=False).update(is_read=True)
     return JsonResponse({'success': True})
+
+@login_required
+def poll_updates_api(request):
+    """
+    Polling endpoint for JS to fetch real-time updates (notifications, posts).
+    """
+    unread_notifs = Notification.objects.filter(receiver=request.user, is_read=False).count()
+    
+    from core.services.feed_service import get_feed_queryset
+    latest_post = get_feed_queryset(request.user).first()
+    latest_post_id = latest_post.id if latest_post else 0
+    
+    return JsonResponse({
+        'unread_notifs': unread_notifs,
+        'latest_post_id': latest_post_id
+    })

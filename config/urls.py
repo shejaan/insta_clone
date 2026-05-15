@@ -47,6 +47,7 @@ urlpatterns = [
     path('notifications/',                       views.notifications_view,     name='notifications'),
     path('notifications/<int:notif_id>/read/',   views.mark_notification_read, name='mark_notification_read'),
     path('notifications/read-all/',              views.mark_all_notifications_read, name='mark_all_notifications_read'),
+    path('api/poll-updates/',                    views.poll_updates_api,       name='poll_updates_api'),
 
     # ── Explore ──
     path('explore/', views.explore_view, name='explore'),
