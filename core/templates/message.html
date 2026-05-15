@@ -28,6 +28,7 @@
       background: var(--bg);
       color: var(--dark);
       height: 100vh;
+      height: 100dvh;
       overflow: hidden;
       display: flex;
       flex-direction: column;
@@ -210,8 +211,8 @@
     }
 
     .bubble {
-      max-width: 65%; padding: 10px 14px; border-radius: 20px;
-      font-size: 14px; line-height: 1.45; word-break: break-word;
+      padding: 10px 14px; border-radius: 20px; min-width: 0;
+      font-size: 14px; line-height: 1.45; overflow-wrap: break-word; word-break: break-word;
     }
     .msg-row.in .bubble { background: var(--bg-2); color: var(--dark); border-bottom-left-radius: 4px; border: 1px solid var(--border); }
     .msg-row.out .bubble { background: var(--grad-short); color: #fff; border-bottom-right-radius: 4px; }
@@ -236,6 +237,7 @@
     .msg-input {
       flex: 1; border: none; outline: none; background: none; font-size: 14px; color: var(--dark);
       resize: none; max-height: 120px; line-height: 1.4; font-family: 'Inter', sans-serif;
+      -webkit-user-select: text; user-select: text;
     }
     .msg-input::placeholder { color: var(--gray); }
 
@@ -311,20 +313,23 @@
 
     @media(max-width:768px) {
       .inbox {
-        width: 100%
+        width: 100%;
       }
 
       .chat {
-        display: none
+        display: none;
       }
 
       nav .nsearch {
-        display: none
+        display: none;
       }
 
       .shell.mobile-chat-active .inbox { display: none; }
       .shell.mobile-chat-active .chat { display: flex; width: 100%; }
       .back-btn-mobile { display: flex; }
+      
+      .shell { margin: 0; border: none; border-radius: 0; max-width: 100%; height: 100%; }
+      nav { padding: 0 16px; }
     }
 
     /* ── MESSAGE ACTIONS & REPLY UI ── */
@@ -353,7 +358,7 @@
     .reply-close { cursor: pointer; color: var(--gray); font-size: 18px; }
     .reply-close:hover { color: var(--dark); }
 
-    .bubble-wrapper { position: relative; max-width: 65%; display: flex; flex-direction: column; }
+    .bubble-wrapper { position: relative; max-width: 65%; display: flex; flex-direction: column; min-width: 0; }
     .reply-ref {
       font-size: 12px; color: var(--gray); margin-bottom: 4px; padding-left: 8px;
       border-left: 2px solid var(--border); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
@@ -365,6 +370,17 @@
     
     .chat-input-wrapper { display: flex; flex-direction: column; flex-shrink: 0; background: var(--bg-2); border-top: 1px solid var(--border); }
     .chat-input-area { border-top: none; }
+
+    .emoji-picker {
+      position: absolute; bottom: 100%; right: 20px; background: var(--bg-3);
+      border: 1px solid var(--border); border-radius: 12px; padding: 10px;
+      box-shadow: 0 10px 30px rgba(0,0,0,.5); z-index: 100;
+      display: none; grid-template-columns: repeat(4, 1fr); gap: 8px;
+      margin-bottom: 10px;
+    }
+    .emoji-picker.show { display: grid; }
+    .ep-emoji { font-size: 24px; cursor: pointer; text-align: center; transition: transform .15s; user-select: none; }
+    .ep-emoji:hover { transform: scale(1.2); }
   </style>
 </head>
 
@@ -549,12 +565,6 @@
 
       // Poll every 4 seconds for new messages
       pollTimer = setInterval(function () { fetchMessages(username, false); }, 4000);
-      
-      // Auto-focus input for keyboard
-      setTimeout(function() {
-        var inp = document.getElementById('msgInput');
-        if (inp) inp.focus();
-      }, 300);
     }
 
     function closeChatMobile() {
@@ -603,11 +613,14 @@
         </div>
         <span class="reply-close" onclick="cancelReply()">✕</span>
       </div>
-      <div class="chat-input-area">
-        <div class="msg-input-wrap">
+      <div class="chat-input-area" style="position: relative;">
+        <div id="emojiPicker" class="emoji-picker">
+          ${['😊','❤️','🔥','😂','🎉','👏','🙌','💯','✨','😍','🥺','😭','😎','👍','🙏','🤔'].map(e => `<span class="ep-emoji" onclick="insertEmojiChar('${e}')">${e}</span>`).join('')}
+        </div>
+        <div class="msg-input-wrap" onclick="document.getElementById('msgInput').focus()">
           <textarea class="msg-input" id="msgInput" placeholder="Message ${esc(other.full_name)}…" rows="1"
             onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
-          <span class="emoji-btn" onclick="insertEmoji()">😊</span>
+          <span class="emoji-btn" onclick="toggleEmojiPicker(event)">😊</span>
         </div>
         <button class="send-btn" onclick="sendMessage()" title="Send">
           <svg viewBox="0 0 24 24" fill="none" stroke="#0095f6" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2" fill="#0095f6" stroke="none"/></svg>
@@ -624,6 +637,9 @@
     let selectedMsgId = null;
     let selectedMsgText = '';
     let selectedMsgOut = false;
+    let touchTimer;
+    let touchStartX, touchStartY;
+    let menuPosX, menuPosY;
 
     // Close menu on click outside
     document.addEventListener('click', function(e) {
@@ -631,8 +647,36 @@
       if(menu && !e.target.closest('#msgMenu')) menu.classList.remove('show');
     });
 
-    function showMenu(e, id, text, out) {
-      if(e.cancelable) e.preventDefault();
+    function handleTouchStart(e, id, text, out) {
+      if (e.touches && e.touches.length > 1) return;
+      var touch = e.touches[0];
+      touchStartX = touch.clientX;
+      touchStartY = touch.clientY;
+      menuPosX = touch.pageX;
+      menuPosY = touch.pageY;
+      touchTimer = setTimeout(function() {
+        showMenu(null, id, text, out, menuPosX, menuPosY);
+      }, 500);
+    }
+
+    function handleTouchMove(e) {
+      if (!touchTimer) return;
+      var touch = e.touches[0];
+      if (Math.abs(touch.clientX - touchStartX) > 10 || Math.abs(touch.clientY - touchStartY) > 10) {
+        clearTimeout(touchTimer);
+        touchTimer = null;
+      }
+    }
+
+    function handleTouchEnd(e) {
+      if (touchTimer) {
+        clearTimeout(touchTimer);
+        touchTimer = null;
+      }
+    }
+
+    function showMenu(e, id, text, out, posX, posY) {
+      if(e && e.cancelable) e.preventDefault();
       selectedMsgId = id;
       selectedMsgText = text;
       selectedMsgOut = out;
@@ -643,9 +687,14 @@
       
       menu.classList.add('show');
       
-      // Position menu near click/touch
-      var x = e.pageX || (e.touches && e.touches[0].pageX) || window.innerWidth / 2;
-      var y = e.pageY || (e.touches && e.touches[0].pageY) || window.innerHeight / 2;
+      var x, y;
+      if (e) {
+         x = e.pageX || (e.touches && e.touches.length > 0 ? e.touches[0].pageX : window.innerWidth / 2);
+         y = e.pageY || (e.touches && e.touches.length > 0 ? e.touches[0].pageY : window.innerHeight / 2);
+      } else {
+         x = posX;
+         y = posY;
+      }
       
       menu.style.left = Math.min(x, window.innerWidth - 150) + 'px';
       menu.style.top = Math.min(y, window.innerHeight - 180) + 'px';
@@ -714,7 +763,7 @@
         
         var safeTextForJS = m.text ? esc(m.text).replace(/'/g, "\\'") : '';
         var menuEvents = !m.is_deleted ? `oncontextmenu="showMenu(event, ${m.id}, '${safeTextForJS}', ${m.out})"` : '';
-        menuEvents += !m.is_deleted ? ` ontouchstart="window.lt=setTimeout(function(){showMenu(event, ${m.id}, '${safeTextForJS}', ${m.out})}, 500)" ontouchend="clearTimeout(window.lt)" ontouchmove="clearTimeout(window.lt)"` : '';
+        menuEvents += !m.is_deleted ? ` ontouchstart="handleTouchStart(event, ${m.id}, '${safeTextForJS}', ${m.out})" ontouchend="handleTouchEnd(event)" ontouchmove="handleTouchMove(event)"` : '';
 
         var deletedStyle = m.is_deleted ? 'background:transparent;border:1px solid var(--border);color:var(--gray);font-style:italic;' : '';
 
@@ -848,8 +897,38 @@
     /* ── Helpers ── */
     function scrollBottom() { var a = document.getElementById('msgArea'); if (a) a.scrollTop = a.scrollHeight; }
     function handleKey(e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } }
+    function scrollToMsg(id) {
+      var el = document.getElementById('msg-' + id);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        var wrapper = el.querySelector('.bubble-wrapper');
+        if (wrapper) {
+          wrapper.style.transition = 'transform 0.3s';
+          wrapper.style.transform = 'scale(1.05)';
+          setTimeout(function() { wrapper.style.transform = 'none'; }, 300);
+        }
+      }
+    }
     function autoResize(el) { el.style.height = 'auto'; el.style.height = Math.min(el.scrollHeight, 120) + 'px'; }
-    function insertEmoji() { var i = document.getElementById('msgInput'); if (!i) return; var e = ['😊', '❤️', '🔥', '😂', '🎉', '👏', '🙌', '💯', '✨', '😍']; i.value += e[Math.floor(Math.random() * e.length)]; i.focus(); }
+    function toggleEmojiPicker(e) {
+      if(e) e.stopPropagation();
+      var picker = document.getElementById('emojiPicker');
+      if(picker) picker.classList.toggle('show');
+    }
+    function insertEmojiChar(emoji) {
+      var i = document.getElementById('msgInput');
+      if (!i) return;
+      i.value += emoji;
+      toggleEmojiPicker();
+      i.focus();
+      autoResize(i);
+    }
+    document.addEventListener('click', function(e) {
+      var picker = document.getElementById('emojiPicker');
+      if(picker && picker.classList.contains('show') && !e.target.closest('#emojiPicker') && !e.target.closest('.emoji-btn')) {
+        picker.classList.remove('show');
+      }
+    });
     function setTab(btn) { document.querySelectorAll('.tab-btn').forEach(function (b) { b.classList.remove('active'); }); btn.classList.add('active'); }
     function esc(t) {
       if (!t) return '';
@@ -870,6 +949,16 @@
       var withUser = params.get('with');
       if (withUser) openChat(withUser);
     })();
+
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', function() {
+        var shell = document.querySelector('.shell');
+        if (shell && window.innerWidth <= 768) {
+          document.body.style.height = window.visualViewport.height + 'px';
+          scrollBottom();
+        }
+      });
+    }
   </script>
 
   
