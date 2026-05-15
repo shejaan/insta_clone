@@ -24,9 +24,12 @@ def notifications_context(request):
     )
     
     unread_notifications_count = Notification.objects.filter(receiver=me, is_read=False).count()
+    from core.models import Message
+    unread_messages_count = Message.objects.filter(receiver=me, is_read=False).count()
     
     return {
         'follow_requests': follow_requests,
         'notifications': notifications,
         'unread_notifications_count': unread_notifications_count,
+        'unread_messages_count': unread_messages_count,
     }
