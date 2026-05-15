@@ -688,8 +688,6 @@
       if(inp && activeEditId) inp.value = '';
     }
 
-    /* ── Render messages into #msgArea ── */
-    var _lastMsgData = "";
     function renderMessages(msgs, other) {
       var dataStr = JSON.stringify(msgs);
       if (dataStr === _lastMsgData) return;
@@ -708,40 +706,44 @@
         var replyHtml = '';
         if(m.reply_to && !m.is_deleted) {
            var rText = m.reply_to.text || 'Message unsent';
-           replyHtml = \`<div class="reply-ref">\${m.reply_to.out ? 'You' : esc(other?other.username:'')}: \${esc(rText)}</div>\`;
+           replyHtml = `<div class="reply-ref" onclick="scrollToMsg(${m.reply_to.id})">${m.reply_to.out ? 'You' : esc(other?other.username:'')}: ${esc(rText)}</div>`;
         }
 
-        var editHtml = m.is_edited && !m.is_deleted ? \`<span class="msg-edited">(edited)</span>\` : '';
+        var editHtml = m.is_edited && !m.is_deleted ? `<span class="msg-edited">(edited)</span>` : '';
         
         var safeTextForJS = m.text ? esc(m.text).replace(/'/g, "\\'") : '';
-        var menuEvents = !m.is_deleted ? \`oncontextmenu="showMenu(event, \${m.id}, '\${safeTextForJS}', \${m.out})"\` : '';
-        menuEvents += !m.is_deleted ? \` ontouchstart="window.lt=setTimeout(function(){showMenu(event, \${m.id}, '\${safeTextForJS}', \${m.out})}, 500)" ontouchend="clearTimeout(window.lt)" ontouchmove="clearTimeout(window.lt)"\` : '';
+        var menuEvents = !m.is_deleted ? `oncontextmenu="showMenu(event, ${m.id}, '${safeTextForJS}', ${m.out})"` : '';
+        menuEvents += !m.is_deleted ? ` ontouchstart="window.lt=setTimeout(function(){showMenu(event, ${m.id}, '${safeTextForJS}', ${m.out})}, 500)" ontouchend="clearTimeout(window.lt)" ontouchmove="clearTimeout(window.lt)"` : '';
 
         var deletedStyle = m.is_deleted ? 'background:transparent;border:1px solid var(--border);color:var(--gray);font-style:italic;' : '';
 
         if (m.out) {
-          html += \`<div class="msg-row out">
-            <div class="bubble-wrapper" \${menuEvents}>
-              \${replyHtml}
-              <div class="bubble \${isEmoji ? 'emoji-only' : ''}" style="\${deletedStyle}">\${text}\${editHtml}</div>
+          html += `<div class="msg-row out" id="msg-${m.id}">
+            <div class="bubble-wrapper" ${menuEvents}>
+              ${replyHtml}
+              <div class="bubble ${isEmoji ? 'emoji-only' : ''}" style="${deletedStyle}">${text}${editHtml}</div>
             </div>
-          </div>\`;
+          </div>`;
         } else {
-          html += \`<div class="msg-row in">
-            <div class="msg-av">\${avHTML(other ? other.avatar_url : null, 28)}</div>
-            <div class="bubble-wrapper" \${menuEvents}>
-              \${replyHtml}
-              <div class="bubble \${isEmoji ? 'emoji-only' : ''}" style="\${deletedStyle}">\${text}\${editHtml}</div>
+          html += `<div class="msg-row in" id="msg-${m.id}">
+            <div class="msg-av">${avHTML(other ? other.avatar_url : null, 28)}</div>
+            <div class="bubble-wrapper" ${menuEvents}>
+              ${replyHtml}
+              <div class="bubble ${isEmoji ? 'emoji-only' : ''}" style="${deletedStyle}">${text}${editHtml}</div>
             </div>
-          </div>\`;
+          </div>`;
         }
       });
 
       // Seen indicator
       var lastOut = msgs.slice().reverse().find(function(m) { return m.out; });
       if (lastOut) {
-          html += \`<div class="seen-row"><span class="seen-text">\${lastOut.is_read ? 'Seen' : 'Delivered'}</span></div>\`;
+          html += `<div class="seen-row"><span class="seen-text">${lastOut.is_read ? 'Seen' : 'Delivered'}</span></div>`;
       }
+
+      area.innerHTML = html;
+      if (isScrolledToBottom || msgs.length <= 15) scrollBottom();
+    }
 
       area.innerHTML = html;
       if (isScrolledToBottom || msgs.length <= 15) scrollBottom();
